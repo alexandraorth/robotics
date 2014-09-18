@@ -48,28 +48,41 @@ function finished= nav(serPort)
     fprintf('Robot is detecting wall- will begin circumnavigating\n');
 %     circumnavigation loop
     i = 1;
+    turnMax = 180;
     while i == 1%need condition- this will eventually be the starting pt
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
         BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        angle = 0;
     
+        disp('----')
+        disp(BumpRight)
+        disp(BumpLeft)
+        disp(BumpFront)
         if BumpLeft
-            turnAngle(serPort, .2, 90);
+            disp('in bump left');
+           turnAngle(serPort, .2, 90);
+        elseif BumpFront
+            disp('in bump front');
+           turnAngle(serPort, .2, 50);
+        elseif BumpRight 
+            disp('in bump right');
+%            travelDist(serPort, .2, .1);
+           SetFwdVelAngVelCreate(serPort, .1, 0);
+        else
+            disp('in the else');
+            while angle < turnMax
+                turnAngle(serPort, .2, -10);
+                travelDist(serPort, .2, .005);
+                [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
+                BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+                if BumpRight || BumpLeft || BumpFront
+                   break; 
+                end
+                angle = angle + 10; 
+%                 disp(angle);
+            end
+%            travelDist(serPort, .2, .05);
         end
-        if BumpRight || BumpFront
-          turnAngle(serPort, .2, 50);
-        end
-        SetFwdVelAngVelCreate(serPort, .4, -.4);
         pause(.5);
-        
-%         if wallSensor ==  0
-%            if BumpFront
-%                turnAngle(serPort, .2, 45);
-%            end
-%            SetFwdVelAngVelCreate(serPort, .4, -.4);   
-%         else
-%             turnAngle(serPort, .2, 20); %turn to the left by 5 degrees
-%         end
-%         wallSensor =  WallSensorReadRoomba(serPort);
-
     end
 end
