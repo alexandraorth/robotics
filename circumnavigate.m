@@ -11,13 +11,13 @@ function pos= circumnavigate(serPort)
         pause(0.01);
     end
 end
-
+ 
 function frontBumped= checkFrontBump(serPort)
     forward= .2;
     [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
         BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     frontBumped= BumpFront;
-    right= BumpRight
+    right= BumpRight;
     if right
         SetFwdVelAngVelCreate(serPort, forward, -1); %turns right if bump right
     end
@@ -26,13 +26,63 @@ function frontBumped= checkFrontBump(serPort)
         SetFwdVelAngVelCreate(serPort, forward, 1); %turns left if bump left
     end
 end
+ 
+function [totalx, totaly] = caculcatedist(distance, angle, totalx, totaly)
+    disp('THIS IS THE ANGLE');
+    disp(angle);
+    
+    disp('vals')
+    disp(totalx + distance*cos(angle));
+    disp(totaly + distance*sin(angle));
 
+    totalx = totalx + distance*cos(angle);
+    totaly = totaly + distance*sin(angle);
+    
+    
+    %     
+%     
+%     if angle < -.3 & angle > -1.5
+%         disp('1');
+%         totalx = totalx + distance;
+%         totaly = totaly;
+% %         RIGHT
+%     elseif angle > 1.5 & angle < 3.5
+%         disp('2')
+%         totalx = totalx - distance;
+%         totaly = totaly;
+% %         LEFT
+%     elseif angle > .3 & angle <= 1.5
+%         disp('3')
+%         totalx = totalx;
+%         totaly = totaly + distance;
+% %         UP
+%     elseif angle <= -1.5 & angle > -3.5
+%         disp('4')
+%         totalx = totalx;
+%         totaly = totaly - distance;
+% %         DOWN
+%     else
+%         totalx = totalx;
+%         totaly = totaly;
+%     end
+    
+end
+
+% function won=havewon(xval, yval)
+%   if xval < abs(.2) && yval < abs(.2)
+%     won = 1;
+%   else
+%       won = 0;
+%   end
+%   
+% end
+ 
 function finished= nav(serPort)
     circled= 0;
     finished= 0;
     SetFwdVelAngVelCreate(serPort, 0, 0); %stop the robot
     wallSensor= WallSensorReadRoomba(serPort);
-
+ 
     fprintf('Turning left until wall detected\n');
     %if not detecting wall, turn left until wall detected
     if wallSensor == 0
@@ -43,46 +93,76 @@ function finished= nav(serPort)
         end    
     end
     pause(1);
-
-
+ 
+ 
     fprintf('Robot is detecting wall- will begin circumnavigating\n');
 %     circumnavigation loop
-    i = 1;
+    error = .2
+    en_route = false
     turnMax = 180;
-    while i == 1%need condition- this will eventually be the starting pt
+    totalx = 0;
+    totaly = 0;
+    totalAngle = 0;
+    DistanceSensorRoomba(serPort);
+    AngleSensorRoomba(serPort);
+    while true
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
         BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
         angle = 0;
     
         disp('----')
-        disp(BumpRight)
-        disp(BumpLeft)
-        disp(BumpFront)
         if BumpLeft
             disp('in bump left');
-           turnAngle(serPort, .2, 90);
+            SetFwdVelAngVelCreate(serPort, 0, 0);
+            turnAngle(serPort, .2, 90);
+            
+            totalAngle = totalAngle + AngleSensorRoomba(serPort);
+            [totalx, totaly] = caculcatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+           
         elseif BumpFront
             disp('in bump front');
-           turnAngle(serPort, .2, 50);
+            SetFwdVelAngVelCreate(serPort, 0, 0);
+            turnAngle(serPort, .2, 50);
+            
+            totalAngle = totalAngle + AngleSensorRoomba(serPort);
+            [totalx, totaly] = caculcatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+
         elseif BumpRight 
             disp('in bump right');
-%            travelDist(serPort, .2, .1);
-           SetFwdVelAngVelCreate(serPort, .1, 0);
+            SetFwdVelAngVelCreate(serPort, .1, 0);
+            
+            totalAngle = totalAngle + AngleSensorRoomba(serPort);
+            [totalx, totaly] = caculcatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+
         else
             disp('in the else');
+            SetFwdVelAngVelCreate(serPort, 0, 0);
             while angle < turnMax
                 turnAngle(serPort, .2, -10);
                 travelDist(serPort, .2, .005);
                 [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
                 BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+            
+            
+                totalAngle = totalAngle + AngleSensorRoomba(serPort);
+                [totalx, totaly] = caculcatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+
                 if BumpRight || BumpLeft || BumpFront
                    break; 
                 end
                 angle = angle + 10; 
-%                 disp(angle);
             end
 %            travelDist(serPort, .2, .05);
         end
         pause(.5);
+        
+        if totalx > error || totaly > error
+            en_route = true;
+        end
+            
+        if abs(totalx) <= error & abs(totaly) <= error & en_route == true
+            break
+        end
     end
 end
+
