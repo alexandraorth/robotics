@@ -10,7 +10,6 @@ function finished= circumnavigate(serPort)
         end
         pause(0.01);
     end
-end
  
 function frontBumped= checkFrontBump(serPort)
     forward= .2;
@@ -25,71 +24,13 @@ function frontBumped= checkFrontBump(serPort)
     if left
         SetFwdVelAngVelCreate(serPort, forward, 1); %turns left if bump left
     end
-end
  
 function [totalx, totaly] = caculatedist(distance, angle, totalx, totaly)
-    disp('THIS IS THE ANGLE');
-    disp(angle);
-    
-%    disp('vals')
-%    disp(totalx + distance*cos(angle));
-%    disp(totaly + distance*sin(angle));
-
-%    totalx = totalx + distance*cos(angle);
-%    totaly = totaly + distance*sin(angle);
-    
-    
-    %     
-     
-     if angle < -.15 & angle > -1.5
-         disp('1 right');
-         totalx = totalx + distance;
-         totaly = totaly;
- %         RIGHT
-     elseif angle >= 5 & angle < 6.1
-         disp('6 right');
-         totalx = totalx + distance;
-         totaly = totaly;
- %         RIGHT
-     elseif angle >= 1.5 & angle < 3
-         disp('2 left')
-         totalx = totalx - distance;
-         totaly = totaly;
- %         LEFT
-     elseif angle >= -4.8 & angle < -3.5
-         disp('2 left')
-         totalx = totalx - distance;
-         totaly = totaly;
- %         LEFT
-     elseif angle > .15 & angle <= 1.5
-         disp('3 up')
-         totalx = totalx;
-         totaly = totaly + distance;
- %         UP
-     elseif angle <= -1.5 & angle > -3.5
-         disp('4 down')
-         totalx = totalx;
-         totaly = totaly - distance;
- %         DOWN
-     elseif angle >= 3 & angle < 5
-         disp('5 down')
-         totalx = totalx;
-         totaly = totaly - distance;
- %         DOWN
-     else
-         totalx = totalx;
-         totaly = totaly;
-     end
-     
-    disp('vals')
-    disp(totalx);
-    disp(totaly);
-    
-end
+    totalx = totalx + distance*cos(angle)
+    totaly = totaly + distance*sin(angle)
 
 function hvalue= heuristicsError(complexity)
  hvalue= (power(complexity,1.05)/2500)
-end
 
 function finished= nav(serPort)
     circled= 0;
@@ -115,8 +56,7 @@ function finished= nav(serPort)
     en_route = false
     turnMax = 180;
     totalx = 0;
-    totaly = 0;
-    totalAngle = 0;
+    totaly = 0; 
     complexity = 100;
     DistanceSensorRoomba(serPort);
     AngleSensorRoomba(serPort);
@@ -133,8 +73,7 @@ function finished= nav(serPort)
             if en_route
                 complexity = complexity + 9;
             end
-            totalAngle = totalAngle + AngleSensorRoomba(serPort);
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
            
         elseif BumpFront
             disp('in bump front');
@@ -143,15 +82,13 @@ function finished= nav(serPort)
             if en_route
                 complexity = complexity + 5;
             end
-            totalAngle = totalAngle + AngleSensorRoomba(serPort);
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
 
         elseif BumpRight 
             disp('in bump right');
             SetFwdVelAngVelCreate(serPort, .1, 0);
             complexity = complexity + 1;
-            totalAngle = totalAngle + AngleSensorRoomba(serPort);
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
 
         else
             disp('in the else');
@@ -163,21 +100,21 @@ function finished= nav(serPort)
                 BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             
                 complexity = complexity + 1;
-                totalAngle = totalAngle + AngleSensorRoomba(serPort);
-                [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), totalAngle, totalx, totaly);
+                [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
 
                 if BumpRight || BumpLeft || BumpFront
                    break; 
                 end
                 angle = angle + 10; 
             end
-%            travelDist(serPort, .2, .05);
         end
         pause(.5);
         
         if totalx > error || totaly > error
             en_route = true;
         end
+        disp(totalx)
+        disp(totaly)
         disp('complexity')
         disp(complexity)
         %disp(heuristicsError(complexity))
@@ -187,5 +124,3 @@ function finished= nav(serPort)
             break
         end
     end
-end
-
