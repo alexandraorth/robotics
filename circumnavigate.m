@@ -91,15 +91,6 @@ function hvalue= heuristicsError(complexity)
  hvalue= (power(complexity,1.05)/2500)
 end
 
-% function won=havewon(xval, yval)
-%   if xval < abs(.2) && yval < abs(.2)
-%     won = 1;
-%   else
-%       won = 0;
-%   end
-%   
-% end
- 
 function finished= nav(serPort)
     circled= 0;
     finished= 0;
