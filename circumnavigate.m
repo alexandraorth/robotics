@@ -41,12 +41,12 @@ function [totalx, totaly] = caculatedist(distance, angle, totalx, totaly)
     
     %     
      
-     if angle < -.2 & angle > -1.5
+     if angle < -.15 & angle > -1.5
          disp('1 right');
          totalx = totalx + distance;
          totaly = totaly;
  %         RIGHT
-     elseif angle <= 6.1 & angle > 5
+     elseif angle >= 5 & angle < 6.1
          disp('6 right');
          totalx = totalx + distance;
          totaly = totaly;
@@ -61,7 +61,7 @@ function [totalx, totaly] = caculatedist(distance, angle, totalx, totaly)
          totalx = totalx - distance;
          totaly = totaly;
  %         LEFT
-     elseif angle > .2 & angle <= 1.5
+     elseif angle > .15 & angle <= 1.5
          disp('3 up')
          totalx = totalx;
          totaly = totaly + distance;
@@ -71,7 +71,7 @@ function [totalx, totaly] = caculatedist(distance, angle, totalx, totaly)
          totalx = totalx;
          totaly = totaly - distance;
  %         DOWN
-     elseif angle >= 3 & angle < 4.8
+     elseif angle >= 3 & angle < 5
          disp('5 down')
          totalx = totalx;
          totaly = totaly - distance;
@@ -82,8 +82,8 @@ function [totalx, totaly] = caculatedist(distance, angle, totalx, totaly)
      end
      
     disp('vals')
-    disp(totalx + distance*cos(angle));
-    disp(totaly + distance*sin(angle));
+    disp(totalx);
+    disp(totaly);
     
 end
 
@@ -189,7 +189,7 @@ function finished= nav(serPort)
         end
         disp('complexity')
         disp(complexity)
-        disp(heuristicsError(complexity))
+        %disp(heuristicsError(complexity))
         disp('!----!')
         if abs(totalx) <= heuristicsError(complexity) & abs(totaly) <= heuristicsError(complexity) & en_route == true
             finished = 1;
