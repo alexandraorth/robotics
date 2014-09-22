@@ -6,23 +6,26 @@ function finished= circumnavigate(serPort)
     orientToWall()
     goStraight()
 
-function forceContact()
+function forceContact(serPort)
     BumpFront = 0
     BumpRight = 0
     BumpLeft = 0
-    while ~(BumpFront || BumpRight || BumpLeft)
-        SetFwdVelAngVelCreate(serPort, .1, 0)
+    while true 
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
+        if BumpFront || BumpRight || BumpLeft
+            break
+        end
+        SetFwdVelAngVelCreate(serPort, .1, 0)
     end
 
-function goStraight()
+function goStraight(serPort)
     wallSensor = WallSensorReadRoomba(serPort)
     while wallSensor == 1
         SetFwdVelAngVelCreate(serPort, .1, 0)
     end
     SetFwdVelAngVelCreate(serPort, 0, 0)
 
-function orientToWall()
+function orientToWall(serPort)
     wallSensor = WallSensorReadRoomba(serPort) 
     while true
         if WallSensorReadRoomba(serPort) == 1
