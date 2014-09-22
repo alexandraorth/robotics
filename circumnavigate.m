@@ -1,9 +1,19 @@
 function finished= circumnavigate(serPort)
-    forward= .2;
-    angle= 0;
-    finished= 0;
     forceContact(serPort)
+    departed = false
+    arrived = false
+    cumulativeAngle = 0
+    totalx = 0
+    totaly = 0
+    AngleSensorRoomba(serPort)
     while true
+        [cumulativeAngle, totalx, totaly] = updateTravelHistory(cumulativeAngle, totalx, totaly)
+        arrived = getArrivalStatus()
+        if departed and arrived
+            SetFwdVelAngVelCreate(serPort, 0, 0)
+            break
+        end
+
         res = orientToWall(serPort)
         if res == 0
             turnCorner(serPort)
@@ -11,8 +21,23 @@ function finished= circumnavigate(serPort)
             traverseWall(serPort)
             turnCorner(serPort)
         end
+        departed = true 
     end
           
+function arrived = getArrivalStatus(totalx, totaly)
+    arrived = false
+    if totalx == 0 and totaly == 0
+        arrived = true
+
+function [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
+    cumulativeAngle = cumulativeAngle + AngleSensorRoomba(serPort)
+    totalx = totalx + distance*cos(cumulativeAngle)
+    totaly = totaly + distance*sin(cumulativeAngle)
+    disp('totalx')
+    disp(totalx)
+    disp('totaly')
+    disp(totaly)
+
 function forceContact(serPort)
     BumpFront = 0
     BumpRight = 0
