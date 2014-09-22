@@ -52,11 +52,14 @@ function finished= nav(serPort)
  
     fprintf('Robot is detecting wall- will begin circumnavigating\n');
 %     circumnavigation loop
-    error = .2
+    err = 0
+    ERR_RATE = 0.1
     en_route = false
     turnMax = 180;
     totalx = 0;
     totaly = 0; 
+    totalAngle = 0
+    totalDistTravelled = 0
     complexity = 100;
     DistanceSensorRoomba(serPort);
     AngleSensorRoomba(serPort);
@@ -69,26 +72,16 @@ function finished= nav(serPort)
         if BumpLeft
             disp('in bump left');
             SetFwdVelAngVelCreate(serPort, 0, 0);
-            turnAngle(serPort, .2, 90);
-            if en_route
-                complexity = complexity + 9;
-            end
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
-           
+            turnAngle(serPort, .2, 90)
+
         elseif BumpFront
             disp('in bump front');
             SetFwdVelAngVelCreate(serPort, 0, 0);
-            turnAngle(serPort, .2, 50);
-            if en_route
-                complexity = complexity + 5;
-            end
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
+            turnAngle(serPort, .2, 50)
 
         elseif BumpRight 
             disp('in bump right');
             SetFwdVelAngVelCreate(serPort, .1, 0);
-            complexity = complexity + 1;
-            [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
 
         else
             disp('in the else');
@@ -97,10 +90,7 @@ function finished= nav(serPort)
                 turnAngle(serPort, .2, -10);
                 travelDist(serPort, .2, .005);
                 [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
-                BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-            
-                complexity = complexity + 1;
-                [totalx, totaly] = caculatedist(DistanceSensorRoomba(serPort), AngleSensorRoomba(serPort), totalx, totaly);
+                BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
 
                 if BumpRight || BumpLeft || BumpFront
                    break; 
@@ -109,17 +99,18 @@ function finished= nav(serPort)
             end
         end
         pause(.5);
-        
-        if totalx > error || totaly > error
+        totalAngle = totalAngle + AngleSensorRoomba(serPort)
+        distTravelled = DistanceSensorRoomba(serPort)
+        [totalx, totaly] = caculatedist(distTravelled, totalAngle, totalx, totaly)
+        totalDistTravelled = totalDistTravelled + abs(distTravelled)
+        err = ERR_RATE * totalDistTravelled
+        if totalDistTravelled > err
             en_route = true;
         end
         disp(totalx)
         disp(totaly)
-        disp('complexity')
-        disp(complexity)
-        %disp(heuristicsError(complexity))
-        disp('!----!')
-        if abs(totalx) <= heuristicsError(complexity) & abs(totaly) <= heuristicsError(complexity) & en_route == true
+
+        if abs(totalx) <= err & abs(totaly) <= err & en_route == true
             finished = 1;
             break
         end
