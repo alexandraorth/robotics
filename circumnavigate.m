@@ -10,6 +10,7 @@ function finished= circumnavigate(serPort)
         else
             traverseWall(serPort)
             turnCorner(serPort)
+        end
     end
           
 function forceContact(serPort)
@@ -40,7 +41,7 @@ function result = orientToWall(serPort)
     totalAngle = 0
     result = 0
     SetFwdVelAngVelCreate(serPort, 0, 0.5)
-    while totalAngle <= 360
+    while totalAngle <= 6.28
         if WallSensorReadRoomba(serPort) == 1
             SetFwdVelAngVelCreate(serPort, 0, 0)
             result = 1
