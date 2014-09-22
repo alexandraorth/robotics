@@ -10,7 +10,7 @@ function finished= circumnavigate(serPort)
     while true 
         [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
         arrived = getArrivalStatus(totalx, totaly)
-        if departed and arrived
+        if departed && arrived
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
         end
