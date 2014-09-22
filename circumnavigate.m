@@ -6,9 +6,10 @@ function finished= circumnavigate(serPort)
     totalx = 0
     totaly = 0
     AngleSensorRoomba(serPort)
-    while true
-        [cumulativeAngle, totalx, totaly] = updateTravelHistory(cumulativeAngle, totalx, totaly)
-        arrived = getArrivalStatus()
+    DistanceSensorRoomba(serPort)
+    while true 
+        [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
+        arrived = getArrivalStatus(totalx, totaly)
         if departed and arrived
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
@@ -28,9 +29,11 @@ function arrived = getArrivalStatus(totalx, totaly)
     arrived = false
     if totalx == 0 and totaly == 0
         arrived = true
+    end
 
 function [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
     cumulativeAngle = cumulativeAngle + AngleSensorRoomba(serPort)
+    distance = DistanceSensorRoomba(serPort)
     totalx = totalx + distance*cos(cumulativeAngle)
     totaly = totaly + distance*sin(cumulativeAngle)
     disp('totalx')
