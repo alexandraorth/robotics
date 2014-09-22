@@ -6,11 +6,10 @@ function finished= circumnavigate(serPort)
     totalx = 0
     totaly = 0
     AngleSensorRoomba(serPort)
-    DistanceSensorRoomba(serPort)
-    while true 
+    while true
         [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
         arrived = getArrivalStatus(totalx, totaly)
-        if departed && arrived
+        if departed & arrived
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
         end
@@ -27,12 +26,12 @@ function finished= circumnavigate(serPort)
           
 function arrived = getArrivalStatus(totalx, totaly)
     arrived = false
-    if totalx == 0 and totaly == 0
+    if totalx == 0 & totaly == 0
         arrived = true
     end
 
-function [cumulativeAngle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
-    cumulativeAngle = cumulativeAngle + AngleSensorRoomba(serPort)
+function [angle, totalx, totaly] = updateTravelHistory(serPort, cumulativeAngle, totalx, totaly)
+    angle = cumulativeAngle + AngleSensorRoomba(serPort)
     distance = DistanceSensorRoomba(serPort)
     totalx = totalx + distance*cos(cumulativeAngle)
     totaly = totaly + distance*sin(cumulativeAngle)
@@ -50,6 +49,7 @@ function forceContact(serPort)
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
         if BumpFront == 1 || BumpRight == 1 || BumpLeft == 1
+            DistanceSensorRoomba(serPort)
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
         end
@@ -84,8 +84,9 @@ function turnCorner(serPort)
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
         
-        if BumpFront || BumpRight || BumpLeft
+        if BumpFront || BumpRight || BumpLeft || WallSensorReadRoomba(serPort) == 1
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
         end 
     end
+    
