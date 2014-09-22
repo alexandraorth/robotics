@@ -3,22 +3,19 @@ function finished= circumnavigate(serPort)
     angle= 0;
     finished= 0;
     forceContact(serPort)
-    orientToWall(serPort)
-    traverseWall(serPort)
-    SetFwdVelAngVelCreate(serPort, 0, 0)
-    turnCorner(serPort)
-
-function turnCorner(serPort)
-    SetFwdVelAngVelCreate(serPort, 0.5, -0.2)
     while true
-        [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
-            BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
-        if BumpFront == 1 || BumpRight == 1 || BumpLeft == 1
-            SetFwdVelAngVelCreate(serPort, 0, 0)
-            break
-        end
-
+        res = orientToWall(serPort)
+        if res == 0
+            turnCorner(serPort)
+        else
+            traverseWall(serPort)
+            turnCorner(serPort)
+    end
+          
 function forceContact(serPort)
+    BumpFront = 0
+    BumpRight = 0
+    BumpLeft = 0
     SetFwdVelAngVelCreate(serPort, .1, 0)
     while true 
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
@@ -26,7 +23,7 @@ function forceContact(serPort)
         if BumpFront == 1 || BumpRight == 1 || BumpLeft == 1
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
-        end 
+        end
     end
 
 function traverseWall(serPort)
@@ -38,15 +35,28 @@ function traverseWall(serPort)
         end 
     end
 
-function orientToWall(serPort)
-    wallSensor = WallSensorReadRoomba(serPort) 
+function result = orientToWall(serPort)
+    AngleSensorRoomba(serPort)
+    totalAngle = 0
+    result = 0
     SetFwdVelAngVelCreate(serPort, 0, 0.5)
-    while true
+    while totalAngle <= 360
         if WallSensorReadRoomba(serPort) == 1
+            SetFwdVelAngVelCreate(serPort, 0, 0)
+            result = 1
+            break
+        end
+        totalAngle = totalAngle + AngleSensorRoomba(serPort)
+    end
+        
+function turnCorner(serPort)
+    SetFwdVelAngVelCreate(serPort, .05, -.17);
+    while true
+        [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
+            BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
+        
+        if BumpFront || BumpRight || BumpLeft
             SetFwdVelAngVelCreate(serPort, 0, 0)
             break
         end 
-        %turnAngle(serPort, .2, 5); %turn 5 degree increments
-        pause(.5)
-    end
-
+    end        
