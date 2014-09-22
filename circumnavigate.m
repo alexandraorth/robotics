@@ -79,7 +79,7 @@ function result = orientToWall(serPort)
     end
         
 function turnCorner(serPort)
-    SetFwdVelAngVelCreate(serPort, .05, -.17);
+    SetFwdVelAngVelCreate(serPort, .05, -.2);
     while true
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort)
