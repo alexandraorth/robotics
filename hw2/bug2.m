@@ -1,3 +1,1 @@
 
-if contactObstacle
-    while
