@@ -27,15 +27,17 @@ function bug2(serPort)
     % MAIN WHILE LOOP
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    while(y <= 0)
-       mtraverse()
+    while(~finished)
+       mtraverse(serPort);
        
-       contacty = y;
-       contactx = x;
+       % set contact coordinates in case robot bumps into object
+       contacty = y
+       contactx = x
        
        if( ~finished )
-           circumnavigate();
+           circumnavigate(serPort);
        end
+       pause(.1);
     end
     
     
@@ -43,41 +45,53 @@ function bug2(serPort)
     % HELPER FUNCTIONS BELOW
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    function [BumpRight, BumpLeft, BumpFront] = mtraverse()
-        SetFwdVelAngVelCreate(serPort, .1, 0)
+    % function traverses the mline
+    % returns when robot bumps into an object or reaches the goal
+    function mtraverse(serPort)
+        SetFwdVelAngVelCreate(serPort, .1, 0);
         while(true)
             %test to see if bumped
             [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
                 BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-            
+            updateYAX(serPort);
             if(BumpRight || BumpLeft || BumpFront)
+                SetFwdVelAngVelCreate(serPort, 0, 0);
                 %Return which bump here (may have done this in fn declaration)
-               break;
-            elseif( y > 10 )
-               finished = true;
-               break;
+                break;
+            elseif( y >= 10 )
+                SetFwdVelAngVelCreate(serPort, 0, 0);
+                finished = true;
+                break;
             end
-        
+            pause(.1);
         end
-        
     end
 
-    function circumnavigate()
-        while( x ~= 0 && contacty > y)
+    % function travels around an object until it reaches the mline
+    function circumnavigate(serPort)
+        % Once this function is entered, it is assumed that x is 0
+        found_wall = orientToWall(serPort)
+        if (found_wall == 1)
+            %traverse wall
+        else
+            %have not found wall, probably around a corner
+        end
+        %while( x ~= 0 && contacty > y)
+            %pause(.1);
            %%OLD CIRCUMNAVIGATE CODE THAT INCLUDES LOGIC TO TEST FOR
            %%DISTANCE. WE MAY HAVE TO INCLUDE OLD CIRCUMNAVIGATE FUNCTIONS.
-        end
+        %end
     end
     
-    function updateYAX() % Update y, angle, x
+    function updateYAX(serPort) % Update y, angle, x
         
         % update angle
         angle = angle + AngleSensorRoomba(serPort);
         
         % update x and y
         distance = DistanceSensorRoomba(serPort);        
-        x = x + distance*cos(angle);
-        y = y + distance*sin(angle);
+        x = x + distance*sin(angle);
+        y = y + distance*cos(angle);
     end
 
     function orientm()
@@ -89,6 +103,35 @@ function bug2(serPort)
            updateYAX();
            SetFwdVelAngVelCreate(serPort, 0, 0); %stop turning
         end
+    end
+
+    % function returns 0 if no wall found, 1 if wall is found
+    function result = orientToWall(serPort)
+        AngleSensorRoomba(serPort);
+        totalAngle = 0; % used to prevent robot from spinning forever
+        result = 0;
+        SetFwdVelAngVelCreate(serPort, 0, 0.5);
+        while totalAngle <= 6.28
+            if WallSensorReadRoomba(serPort) == 1
+                SetFwdVelAngVelCreate(serPort, 0, 0);
+                result = 1;
+        
+                %reset distance in case rotation counts as distance
+                %update angle as well
+                angle_change = AngleSensorRoomba(serPort);
+                angle = angle + angle_change
+                DistanceSensorRoomba(serPort); 
+                break
+            end
+            
+            % have to update global angle as well
+            angle_change = AngleSensorRoomba(serPort);
+            angle = angle + angle_change
+            totalAngle = totalAngle + angle_change
+            pause(.1)
+        end
+        %reset distance in case rotation counts as distance
+        DistanceSensorRoomba(serPort); 
     end
 end
 
