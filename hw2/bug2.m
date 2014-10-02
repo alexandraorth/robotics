@@ -21,11 +21,16 @@ function bug2(serPort)
     contacty = 0;
     angle = 0;
     finished = false;
-    
-    
+   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % MAIN WHILE LOOP
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    %disp('TESTING ORIENTTOWALL')
+    %orientToWall(serPort)
+    %disp('angle')
+    %disp(angle)
+    %disp('END')
     
     while(~finished)
        mtraverse(serPort);
@@ -54,6 +59,8 @@ function bug2(serPort)
             [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
                 BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             updateYAX(serPort);
+            %disp(x)
+            %disp(y)
             if(BumpRight || BumpLeft || BumpFront)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 %Return which bump here (may have done this in fn declaration)
@@ -109,6 +116,7 @@ function bug2(serPort)
     function result = orientToWall(serPort)
         AngleSensorRoomba(serPort);
         totalAngle = 0; % used to prevent robot from spinning forever
+        last_pos_angle = 0;
         result = 0;
         SetFwdVelAngVelCreate(serPort, 0, 0.5);
         while totalAngle <= 6.28
@@ -116,18 +124,26 @@ function bug2(serPort)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 result = 1;
         
-                %reset distance in case rotation counts as distance
                 %update angle as well
                 angle_change = AngleSensorRoomba(serPort);
                 angle = angle + angle_change
-                DistanceSensorRoomba(serPort); 
                 break
             end
             
             % have to update global angle as well
-            angle_change = AngleSensorRoomba(serPort);
+            angle_change = AngleSensorRoomba(serPort)
             angle = angle + angle_change
-            totalAngle = totalAngle + angle_change
+            
+            %store last known postive angle value
+            if (angle_change > 0)
+                last_pos_angle = angle_change;
+            end
+            %only add to totalangle if the angle value is positive
+            if (angle_change > 0)
+                totalAngle = totalAngle + angle_change
+            else
+                totalAngle = totalAngle + last_pos_angle
+            end
             pause(.1)
         end
         %reset distance in case rotation counts as distance
