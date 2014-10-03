@@ -19,8 +19,13 @@ function bug2(serPort)
     y = 0;
     contactx = 0;
     contacty = 0;
+    % Local x and y used to track if robot has left the starting area
+    localx = 0;
+    localy = 0;
+    left_starting = false;
     angle = 0;
     finished = false;
+    back_on_mline = false; % Used to control when robot breaks out of circumnavigation
    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % MAIN WHILE LOOP
@@ -85,15 +90,15 @@ function bug2(serPort)
         % Rotate robot counterclockwise about 10 degrees
         while totalAngle <= 0.175
             
-            % have to update global angle
+            % Have to update global angle
             angle_change = AngleSensorRoomba(serPort)
             angle = angle + angle_change
             
-            %store last known postive angle value
+            % Store last known postive angle value
             if (angle_change > 0)
                 last_pos_angle = angle_change;
             end
-            %only add to totalangle if the angle value is positive
+            % Only add to totalangle if the angle value is positive
             if (angle_change > 0)
                 totalAngle = totalAngle + angle_change
             else
@@ -102,14 +107,34 @@ function bug2(serPort)
             pause(.01)
         end
     end
+    % checks if the robot is back on the mline
+    % if the robot is back on the mline, then orient the robot to the mline
+    function checkmline(serPort)
+        % Break and reorient to m line if back on mline after leaving
+        % starting area
+        if ((localx > 0.05 || localx < -0.05) && (localy > 0.05 || localy < -0.05))
+            left_starting = true;
+        end
+        % mline approximation skewed towards passing the original starting
+        % position to account for some drift
+        if (left_starting == true && (x < 0.005 && x > -0.03) && y > contacty)
+            back_on_mline = true;
+            orientm(serPort);
+        end
+    end
 
     % function travels around an object until it reaches the mline
     function circumnavigate(serPort)
-        while(true)
-            % Once this function is entered, it is assumed that x is 0
+        % Once this function is called, it is assumed that x = 0
+        % Local x and y reset when a new obstacle is encountered
+        localx = 0;
+        localy = 0;
+        left_starting = false;
+        back_on_mline = false;
+        while(~back_on_mline)
             found_wall = orientToWall(serPort)
             if (found_wall == 1)
-                %traverse wall
+                % Traverse wall
                 in_corner = traverseWall(serPort);
                 if (in_corner == 1) % If stuck in corner, turn at least 10 degrees
                     getunstuck(serPort);
@@ -118,12 +143,12 @@ function bug2(serPort)
                 end
                 
             else
-                %have not found wall, probably around a corner
+                % Have not found wall, probably around a corner
                 turnCorner(serPort);
             end
             pause(.01)
         end
-        
+        disp('END CIRCUMNAVIGATE')
         %while( x ~= 0 && contacty > y)
             %pause(.1);
            %%OLD CIRCUMNAVIGATE CODE THAT INCLUDES LOGIC TO TEST FOR
@@ -132,25 +157,37 @@ function bug2(serPort)
     end
     
     function updateYAX(serPort) % Update y, angle, x
-        
+        disp('left')
+        disp(left_starting)
         % update angle
         angle = angle + AngleSensorRoomba(serPort);
         
         % update x and y
         distance = DistanceSensorRoomba(serPort);        
-        x = x + distance*sin(angle);
-        y = y + distance*cos(angle);
+        x = x + distance*sin(angle)
+        y = y + distance*cos(angle)
+        
+        % update localx and localy
+        localx = localx + distance*sin(angle)
+        localy = localy + distance*cos(angle)
     end
 
-    function orientm()
+    % Rotates robot counterclockwise until the angle is near the starting
+    % angle
+    function orientm(serPort)
        
-        %turn in a circle
+       % Turn in a circle
        SetFwdVelAngVelCreate(serPort, 0, .1) 
-       
-        while(angle ~= 0) %need to have this take error into account
-           updateYAX();
-           SetFwdVelAngVelCreate(serPort, 0, 0); %stop turning
+       oriented = false
+        while(~oriented) %need to have this take error into account
+            if (angle < 0.005 && angle  > -0.005)
+                break;
+            end
+            updateYAX(serPort);
+            pause(.001)
         end
+        updateYAX(serPort);
+        SetFwdVelAngVelCreate(serPort, 0, 0); %stop turning
     end
 
     % function returns 0 if no wall found, 1 if wall is found
@@ -161,6 +198,10 @@ function bug2(serPort)
         result = 0;
         SetFwdVelAngVelCreate(serPort, 0, 0.5);
         while totalAngle <= 6.28
+            disp('ORIENTTOWALL')
+            if (back_on_mline)
+                break;
+            end
             % Found wall, rotate left until wall is no longer found then
             % rotate back until wall is found again
             if WallSensorReadRoomba(serPort) == 1
@@ -188,15 +229,15 @@ function bug2(serPort)
                 break
             end
             
-            % have to update global angle as well
+            % Have to update global angle as well
             angle_change = AngleSensorRoomba(serPort)
             angle = angle + angle_change
             
-            %store last known postive angle value
+            % Store last known postive angle value
             if (angle_change > 0)
                 last_pos_angle = angle_change;
             end
-            %only add to totalangle if the angle value is positive
+            % Only add to totalangle if the angle value is positive
             if (angle_change > 0)
                 totalAngle = totalAngle + angle_change
             else
@@ -204,7 +245,7 @@ function bug2(serPort)
             end
             pause(.01)
         end
-        %reset distance in case rotation counts as distance
+        % Reset distance in case rotation counts as distance
         DistanceSensorRoomba(serPort); 
     end
 
@@ -217,6 +258,10 @@ function bug2(serPort)
         disp('3 travel')
         WallSensorReadRoomba(serPort)
         while true
+            checkmline(serPort);
+            if (back_on_mline)
+                break;
+            end
             [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             updateYAX(serPort);
@@ -242,8 +287,13 @@ function bug2(serPort)
 
     % function used to turn the corner
     function turnCorner(serPort)
-    SetFwdVelAngVelCreate(serPort, .05, -.2);
+        SetFwdVelAngVelCreate(serPort, .05, -.2);
         while true
+            disp('TURNCORNER')
+            checkmline(serPort);
+            if (back_on_mline)
+                break;
+            end
             [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             updateYAX(serPort);
