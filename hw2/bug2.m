@@ -14,7 +14,7 @@ function bug2(serPort)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % DECLARE GLOBALS
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    ERROR = 0.05;
     x = 0;
     y = 0;
     contactx = 0;
@@ -113,12 +113,12 @@ function bug2(serPort)
     function checkmline(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
-        if ((localx > 0.4 || localx < -0.4) && (localy > 0.4 || localy < -0.4))
+        if (localx > abs(ERROR) && localy > abs(ERROR))
             left_starting = true;
         end
         % mline approximation skewed towards passing the original starting
         % position to account for some drift
-        if (left_starting == true && x <= .4 && y > contacty)
+        if (left_starting == true && abs(x) <= ERROR && y > contacty)
             back_on_mline = true;
             orientm(serPort);
         end
@@ -187,7 +187,8 @@ function bug2(serPort)
        SetFwdVelAngVelCreate(serPort, 0, .1) 
        oriented = false;
         while(~oriented) %need to have this take error into account
-            if (2*pi  angle < 0.005 && angle  > -0.005)
+            actualAngle = mod(angle,2*pi);
+            if (actualAngle < 0.005 && actualAngle  > -0.005)
                 break;
             end
             updateYAX(serPort);
