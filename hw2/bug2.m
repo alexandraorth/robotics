@@ -38,11 +38,12 @@ function bug2(serPort)
     %disp('END')
     
     while(~finished)
+        disp('not finished')
        mtraverse(serPort);
        
        % set contact coordinates in case robot bumps into object
-       contacty = y
-       contactx = x
+       contacty = y;
+       contactx = x;
        
        if( ~finished )
            circumnavigate(serPort);
@@ -70,7 +71,7 @@ function bug2(serPort)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 %Return which bump here (may have done this in fn declaration)
                 break;
-            elseif( y >= 10 )
+            elseif( y >= 3 )
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 finished = true;
                 break;
@@ -91,8 +92,8 @@ function bug2(serPort)
         while totalAngle <= 0.175
             
             % Have to update global angle
-            angle_change = AngleSensorRoomba(serPort)
-            angle = angle + angle_change
+            angle_change = AngleSensorRoomba(serPort);
+            angle = angle + angle_change;
             
             % Store last known postive angle value
             if (angle_change > 0)
@@ -100,9 +101,9 @@ function bug2(serPort)
             end
             % Only add to totalangle if the angle value is positive
             if (angle_change > 0)
-                totalAngle = totalAngle + angle_change
+                totalAngle = totalAngle + angle_change;
             else
-                totalAngle = totalAngle + last_pos_angle
+                totalAngle = totalAngle + last_pos_angle;
             end
             pause(.01)
         end
@@ -112,12 +113,12 @@ function bug2(serPort)
     function checkmline(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
-        if ((localx > 0.05 || localx < -0.05) && (localy > 0.05 || localy < -0.05))
+        if ((localx > 0.4 || localx < -0.4) && (localy > 0.4 || localy < -0.4))
             left_starting = true;
         end
         % mline approximation skewed towards passing the original starting
         % position to account for some drift
-        if (left_starting == true && (x < 0.005 && x > -0.03) && y > contacty)
+        if (left_starting == true && x <= .4 && y > contacty)
             back_on_mline = true;
             orientm(serPort);
         end
@@ -132,7 +133,7 @@ function bug2(serPort)
         left_starting = false;
         back_on_mline = false;
         while(~back_on_mline)
-            found_wall = orientToWall(serPort)
+            found_wall = orientToWall(serPort);
             if (found_wall == 1)
                 % Traverse wall
                 in_corner = traverseWall(serPort);
@@ -157,30 +158,36 @@ function bug2(serPort)
     end
     
     function updateYAX(serPort) % Update y, angle, x
-        disp('left')
-        disp(left_starting)
         % update angle
         angle = angle + AngleSensorRoomba(serPort);
         
         % update x and y
         distance = DistanceSensorRoomba(serPort);        
-        x = x + distance*sin(angle)
-        y = y + distance*cos(angle)
+        x = x + distance*sin(angle);
+        y = y + distance*cos(angle);
+        
+        disp('==========');
+        disp('x');
+        disp(x);
+        disp('y');
+        disp(y);
+        disp('angle');
+        disp(angle);
         
         % update localx and localy
-        localx = localx + distance*sin(angle)
-        localy = localy + distance*cos(angle)
+        localx = localx + distance*sin(angle);
+        localy = localy + distance*cos(angle);
     end
 
     % Rotates robot counterclockwise until the angle is near the starting
     % angle
     function orientm(serPort)
-       
+       disp('orient to m')
        % Turn in a circle
        SetFwdVelAngVelCreate(serPort, 0, .1) 
-       oriented = false
+       oriented = false;
         while(~oriented) %need to have this take error into account
-            if (angle < 0.005 && angle  > -0.005)
+            if (2*pi  angle < 0.005 && angle  > -0.005)
                 break;
             end
             updateYAX(serPort);
@@ -192,6 +199,7 @@ function bug2(serPort)
 
     % function returns 0 if no wall found, 1 if wall is found
     function result = orientToWall(serPort)
+        disp('orient to wall')
         AngleSensorRoomba(serPort);
         totalAngle = 0; % used to prevent robot from spinning forever
         last_pos_angle = 0;
@@ -207,7 +215,7 @@ function bug2(serPort)
             if WallSensorReadRoomba(serPort) == 1
                 while WallSensorReadRoomba(serPort) == 1
                     angle_change = AngleSensorRoomba(serPort);
-                    angle = angle + angle_change
+                    angle = angle + angle_change;
                     pause(0.01)
                 end
                 SetFwdVelAngVelCreate(serPort, 0, -0.3);
@@ -215,7 +223,7 @@ function bug2(serPort)
                 WallSensorReadRoomba(serPort)
                 while WallSensorReadRoomba(serPort) == 0
                     angle_change = AngleSensorRoomba(serPort);
-                    angle = angle + angle_change
+                    angle = angle + angle_change;
                     pause(0.01)
                 end
                 SetFwdVelAngVelCreate(serPort, 0, 0);
@@ -225,13 +233,13 @@ function bug2(serPort)
                 
                 %update angle as well
                 angle_change = AngleSensorRoomba(serPort);
-                angle = angle + angle_change
+                angle = angle + angle_change;
                 break
             end
             
             % Have to update global angle as well
-            angle_change = AngleSensorRoomba(serPort)
-            angle = angle + angle_change
+            angle_change = AngleSensorRoomba(serPort);
+            angle = angle + angle_change;
             
             % Store last known postive angle value
             if (angle_change > 0)
@@ -239,9 +247,9 @@ function bug2(serPort)
             end
             % Only add to totalangle if the angle value is positive
             if (angle_change > 0)
-                totalAngle = totalAngle + angle_change
+                totalAngle = totalAngle + angle_change;
             else
-                totalAngle = totalAngle + last_pos_angle
+                totalAngle = totalAngle + last_pos_angle;
             end
             pause(.01)
         end
@@ -270,7 +278,7 @@ function bug2(serPort)
             if WallSensorReadRoomba(serPort) == 1 && (BumpFront || BumpLeft || BumpRight)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 updateYAX(serPort);
-                in_corner = 1
+                in_corner = 1;
                 break
             end
             % If wall no longer detected, probably next to corner
