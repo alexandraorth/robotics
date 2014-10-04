@@ -15,6 +15,7 @@ function bug2(serPort)
     % DECLARE GLOBALS
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ERROR = 0.05;
+    ROTATION_COMPENSATION = 20;
     x = 0;
     y = 0;
     contactx = 0;
@@ -78,6 +79,7 @@ function bug2(serPort)
             end
             pause(.01);
         end
+        x = 0;
     end
 
     % Function rotates robot counterclockwise and returns
@@ -184,20 +186,10 @@ function bug2(serPort)
     % angle
     function orientm(serPort)
        disp('orient to m')
-       % Turn in a circle
-       SetFwdVelAngVelCreate(serPort, 0, .1) 
-       oriented = false;
-       while(~oriented) %need to have this take error into account
-            actualAngle = mod(angle,2*pi);
-            disp(actualAngle);
-            if (abs(actualAngle) < 0.005)
-                break;
-            end
-            updateYAX(serPort);
-            pause(.001)
-        end
-        updateYAX(serPort);
-        SetFwdVelAngVelCreate(serPort, 0, 0); %stop turning
+       actualAngle = mod(angle, 2*pi);
+       actualAngleDeg = actualAngle * 360 / (2*pi);
+       turnAngle(serPort, 0.1, 360 - ROTATION_COMPENSATION - actualAngleDeg);
+       updateYAX(serPort);
     end
 
     % function returns 0 if no wall found, 1 if wall is found
