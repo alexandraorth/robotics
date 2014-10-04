@@ -113,6 +113,7 @@ function bug2(serPort)
     function checkmline(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
+        disp('checkmline')
         if (localx > abs(ERROR) && localy > abs(ERROR))
             left_starting = true;
         end
@@ -186,9 +187,10 @@ function bug2(serPort)
        % Turn in a circle
        SetFwdVelAngVelCreate(serPort, 0, .1) 
        oriented = false;
-        while(~oriented) %need to have this take error into account
+       while(~oriented) %need to have this take error into account
             actualAngle = mod(angle,2*pi);
-            if (actualAngle < 0.005 && actualAngle  > -0.005)
+            disp(actualAngle);
+            if (abs(actualAngle) < 0.005)
                 break;
             end
             updateYAX(serPort);
@@ -208,6 +210,7 @@ function bug2(serPort)
         SetFwdVelAngVelCreate(serPort, 0, 0.5);
         while totalAngle <= 6.28
             disp('ORIENTTOWALL')
+            checkmline(serPort);
             if (back_on_mline)
                 break;
             end
