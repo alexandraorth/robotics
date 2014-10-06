@@ -11,11 +11,16 @@
 
 function bug2(serPort) 
 
+    xarray = [];
+    yarray = [];
+    anglearray = [];
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % DECLARE GLOBALS
+    % DECLARE GLOBALS FOR SIMULATOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ERROR = 0.05;
-    ROTATION_COMPENSATION = 20;
+
+    ERROR = 0.01;
+    ROTATION_COMPENSATION = 0;
     x = 0;
     y = 0;
     contactx = 0;
@@ -27,6 +32,24 @@ function bug2(serPort)
     angle = 0;
     finished = false;
     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % DECLARE GLOBALS FOR ACTUAL ROBOT
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     ERROR = 0.05;
+%     ROTATION_COMPENSATION = 20;
+%     x = 0;
+%     y = 0;
+%     contactx = 0;
+%     contacty = 0;
+%     % Local x and y used to track if robot has left the starting area
+%     localx = 0;
+%     localy = 0;
+%     left_starting = false;
+%     angle = 0;
+%     finished = false;
+%     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % MAIN WHILE LOOP
@@ -72,7 +95,10 @@ function bug2(serPort)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 %Return which bump here (may have done this in fn declaration)
                 break;
-            elseif( y >= 3 )
+            elseif( y >= 8 )
+                figure;
+                xarray = xarray * -1;
+                plot(xarray, yarray);
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 finished = true;
                 break;
@@ -116,7 +142,7 @@ function bug2(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
         disp('checkmline')
-        if (localx > abs(ERROR) && localy > abs(ERROR))
+        if (abs(localx) > ERROR && abs(localy) > ERROR)
             left_starting = true;
         end
         % mline approximation skewed towards passing the original starting
@@ -152,12 +178,6 @@ function bug2(serPort)
             end
             pause(.01)
         end
-        disp('END CIRCUMNAVIGATE')
-        %while( x ~= 0 && contacty > y)
-            %pause(.1);
-           %%OLD CIRCUMNAVIGATE CODE THAT INCLUDES LOGIC TO TEST FOR
-           %%DISTANCE. WE MAY HAVE TO INCLUDE OLD CIRCUMNAVIGATE FUNCTIONS.
-        %end
     end
     
     function updateYAX(serPort) % Update y, angle, x
@@ -168,6 +188,10 @@ function bug2(serPort)
         distance = DistanceSensorRoomba(serPort);        
         x = x + distance*sin(angle);
         y = y + distance*cos(angle);
+        
+        xarray(end+1) = x;
+        yarray(end+1) = y;
+        anglearray(end+1) = angle;
         
         disp('==========');
         disp('x');
