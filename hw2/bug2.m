@@ -10,7 +10,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function bug2(serPort) 
-
     xarray = [];
     yarray = [];
     anglearray = [];
@@ -32,7 +31,7 @@ function bug2(serPort)
     angle = 0;
     finished = false;
     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
-
+    i = 0;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % DECLARE GLOBALS FOR ACTUAL ROBOT
@@ -96,11 +95,13 @@ function bug2(serPort)
                 %Return which bump here (may have done this in fn declaration)
                 break;
             elseif( y >= 8 )
-                figure;
-                xarray = xarray * -1;
-                plot(xarray, yarray);
+                figure(1);
+                plot(xarray * -1, yarray);
+                figure(2);
+                plot((1:length(anglearray)), anglearray);
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 finished = true;
+                figure;
                 break;
             end
             pause(.01);
@@ -192,14 +193,6 @@ function bug2(serPort)
         xarray(end+1) = x;
         yarray(end+1) = y;
         anglearray(end+1) = angle;
-        
-        disp('==========');
-        disp('x');
-        disp(x);
-        disp('y');
-        disp(y);
-        disp('angle');
-        disp(angle);
         
         % update localx and localy
         localx = localx + distance*sin(angle);
