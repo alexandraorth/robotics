@@ -21,8 +21,8 @@ function bug2(serPort, is_robot)
     
     ERROR = 0.01;
     ROTATION_COMPENSATION = 0; 
-    X_RIGHT_ERROR = -0.005;
-    X_LEFT_ERROR = 0.005;
+    X_RIGHT_ERROR = -0.01;
+    X_LEFT_ERROR = 0.01;
    
     x = 0;
     y = 0;
@@ -88,7 +88,7 @@ function bug2(serPort, is_robot)
                 SetFwdVelAngVelCreate(serPort, 0, 0);
                 %Return which bump here (may have done this in fn declaration)
                 break;
-            elseif( y >= 8 )
+            elseif( y >= 4 )
                 figure(1);
                 plot(xarray * -1, yarray);
                 figure(2);
@@ -210,7 +210,6 @@ function bug2(serPort, is_robot)
        actualAngle = mod(angle, 2*pi);
        actualAngleDeg = actualAngle * 360 / (2*pi);
        turnAngle(serPort, 0.1, 360 - ROTATION_COMPENSATION - actualAngleDeg);
-       angle = 0;
        updateYAX(serPort);
     end
 
