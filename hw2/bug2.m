@@ -9,16 +9,20 @@
 % To run: 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function bug2(serPort, is_simulator) 
+function bug2(serPort, is_robot) 
+
+    if nargin < 2
+        is_robot = false;
+    end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % DECLARE GLOBALS FOR SIMULATOR OR FOR ACTUAL ROBOT
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    ERROR = 0.02;
-    ROTATION_COMPENSATION = 20;
-    X_RIGHT_ERROR = -0.03;
-    X_LEFT_ERROR = 0.01;
+    ERROR = 0.01;
+    ROTATION_COMPENSATION = 0; 
+    X_RIGHT_ERROR = -0.005;
+    X_LEFT_ERROR = 0.005;
    
     x = 0;
     y = 0;
@@ -38,11 +42,11 @@ function bug2(serPort, is_simulator)
     % DECLARE GLOBALS FOR WHEN RUNNING ON SIMULATOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    if(is_simulator)
-       ERROR = 0.01;
-       ROTATION_COMPENSATION = 0; 
-       X_RIGHT_ERROR = -0.005;
-       X_LEFT_ERROR = 0.005;
+    if(is_robot)
+      ERROR = 0.02;
+      ROTATION_COMPENSATION = 20;
+      X_RIGHT_ERROR = -0.3;
+      X_LEFT_ERROR = 0.1;
     end
     
 
