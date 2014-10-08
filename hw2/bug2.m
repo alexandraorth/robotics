@@ -143,12 +143,13 @@ function bug2(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
         disp('checkmline')
-        if (abs(localx) > ERROR && abs(localy) > ERROR)
+        if (localx > 0.01 && abs(localy) > ERROR)
             left_starting = true;
         end
         % mline approximation skewed towards passing the original starting
         % position to account for some drift
-        if (left_starting == true && abs(x) <= ERROR && y > contacty)
+        x_on_mline = (x <= 0.01) && (x >= -0.03);
+        if (left_starting == true && x_on_mline && y > contacty)
             back_on_mline = true;
             orientm(serPort);
         end
