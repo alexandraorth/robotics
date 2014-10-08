@@ -9,56 +9,46 @@
 % To run: 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function bug2(serPort) 
+function bug2(serPort, is_simulator) 
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % DECLARE GLOBALS FOR SIMULATOR OR FOR ACTUAL ROBOT
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    ERROR = 0.02;
+    ROTATION_COMPENSATION = 20;
+    X_RIGHT_ERROR = -0.03;
+    X_LEFT_ERROR = 0.01;
+   
+    x = 0;
+    y = 0;
+    contactx = 0;
+    contacty = 0;
+    localx = 0; % Local x and y used to track if robot has left the starting area
+    localy = 0;
+    left_starting = false;
+    angle = 0;
+    finished = false;
+    back_on_mline = false; % Used to control when robot breaks out of circumnavigation
     xarray = [];
     yarray = [];
     anglearray = [];
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % DECLARE GLOBALS FOR WHEN RUNNING ON SIMULATOR
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % DECLARE GLOBALS FOR SIMULATOR
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if(is_simulator)
+       ERROR = 0.01;
+       ROTATION_COMPENSATION = 0; 
+       X_RIGHT_ERROR = -0.005;
+       X_LEFT_ERROR = 0.005;
+    end
+    
 
-%     ERROR = 0.01;
-%     ROTATION_COMPENSATION = 0;
-%     x = 0;
-%     y = 0;
-%     contactx = 0;
-%     contacty = 0;
-%     % Local x and y used to track if robot has left the starting area
-%     localx = 0;
-%     localy = 0;
-%     left_starting = false;
-%     angle = 0;
-%     finished = false;
-%     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
-%     i = 0;
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % DECLARE GLOBALS FOR ACTUAL ROBOT
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     ERROR = 0.02;
-     ROTATION_COMPENSATION = 20;
-     x = 0;
-     y = 0;
-     contactx = 0;
-     contacty = 0;
-     % Local x and y used to track if robot has left the starting area
-     localx = 0;
-     localy = 0;
-     left_starting = false;
-     angle = 0;
-     finished = false;
-     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
-   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % MAIN WHILE LOOP
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   
-    %disp('TESTING ORIENTTOWALL')
-    %orientToWall(serPort)
-    %disp('angle')
-    %disp(angle)
-    %disp('END')
     
     while(~finished)
         disp('not finished')
@@ -143,12 +133,13 @@ function bug2(serPort)
         % Break and reorient to m line if back on mline after leaving
         % starting area
         disp('checkmline')
-        if (localx > 0.01 && abs(localy) > ERROR)
+        if (localx > X_LEFT_ERROR && abs(localy) > ERROR)
             left_starting = true;
         end
         % mline approximation skewed towards passing the original starting
         % position to account for some drift
-        x_on_mline = (x <= 0.01) && (x >= -0.03);
+        
+        x_on_mline = (x >= X_RIGHT_ERROR) && (x <= X_LEFT_ERROR);
         if (left_starting == true && x_on_mline && y > contacty)
             back_on_mline = true;
             orientm(serPort);
