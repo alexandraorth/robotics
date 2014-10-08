@@ -18,26 +18,8 @@ function bug2(serPort)
     % DECLARE GLOBALS FOR SIMULATOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    ERROR = 0.01;
-    ROTATION_COMPENSATION = 0;
-    x = 0;
-    y = 0;
-    contactx = 0;
-    contacty = 0;
-    % Local x and y used to track if robot has left the starting area
-    localx = 0;
-    localy = 0;
-    left_starting = false;
-    angle = 0;
-    finished = false;
-    back_on_mline = false; % Used to control when robot breaks out of circumnavigation
-    i = 0;
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % DECLARE GLOBALS FOR ACTUAL ROBOT
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     ERROR = 0.05;
-%     ROTATION_COMPENSATION = 20;
+%     ERROR = 0.01;
+%     ROTATION_COMPENSATION = 0;
 %     x = 0;
 %     y = 0;
 %     contactx = 0;
@@ -49,6 +31,24 @@ function bug2(serPort)
 %     angle = 0;
 %     finished = false;
 %     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
+%     i = 0;
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % DECLARE GLOBALS FOR ACTUAL ROBOT
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     ERROR = 0.02;
+     ROTATION_COMPENSATION = 20;
+     x = 0;
+     y = 0;
+     contactx = 0;
+     contacty = 0;
+     % Local x and y used to track if robot has left the starting area
+     localx = 0;
+     localy = 0;
+     left_starting = false;
+     angle = 0;
+     finished = false;
+     back_on_mline = false; % Used to control when robot breaks out of circumnavigation
    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % MAIN WHILE LOOP
@@ -190,6 +190,14 @@ function bug2(serPort)
         x = x + distance*sin(angle);
         y = y + distance*cos(angle);
         
+        disp('==========');
+        disp('x');
+        disp(x);
+        disp('y');
+        disp(y);
+        disp('angle');
+        disp(angle);
+        
         xarray(end+1) = x;
         yarray(end+1) = y;
         anglearray(end+1) = angle;
@@ -206,6 +214,7 @@ function bug2(serPort)
        actualAngle = mod(angle, 2*pi);
        actualAngleDeg = actualAngle * 360 / (2*pi);
        turnAngle(serPort, 0.1, 360 - ROTATION_COMPENSATION - actualAngleDeg);
+       angle = 0;
        updateYAX(serPort);
     end
 
@@ -235,6 +244,7 @@ function bug2(serPort)
                 disp('1')
                 WallSensorReadRoomba(serPort)
                 while WallSensorReadRoomba(serPort) == 0
+                    disp('in LEFT TURN loop')
                     angle_change = AngleSensorRoomba(serPort);
                     angle = angle + angle_change;
                     pause(0.01)
