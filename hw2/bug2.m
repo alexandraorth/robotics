@@ -44,7 +44,7 @@ function bug2(serPort, is_robot)
 
     if(is_robot)
       ERROR = 0.02;
-      ROTATION_COMPENSATION = 20;
+      ROTATION_COMPENSATION = 0;
       X_RIGHT_ERROR = -0.3;
       X_LEFT_ERROR = 0.1;
     end
@@ -209,7 +209,7 @@ function bug2(serPort, is_robot)
        disp('orient to m')
        actualAngle = mod(angle, 2*pi);
        actualAngleDeg = actualAngle * 360 / (2*pi);
-       turnAngle(serPort, 0.1, 360 - ROTATION_COMPENSATION - actualAngleDeg);
+       turnAngle(serPort, 0.025, 360 - ROTATION_COMPENSATION - actualAngleDeg);
        updateYAX(serPort);
     end
 
