@@ -22,7 +22,7 @@ function bug2(serPort, is_robot)
     ERROR = 0.01;
     ROTATION_COMPENSATION = 0; 
     X_RIGHT_ERROR = -0.01;
-    X_LEFT_ERROR = 0.01;
+    X_LEFT_ERROR = 0.005;
    
     x = 0;
     y = 0;
