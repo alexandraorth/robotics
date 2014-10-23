@@ -169,7 +169,7 @@ function mapping(serPort)
           return;
        end
        
-       chosen_cell = emptyspots(rand(length(eptyspots)));
+       chosen_cell = emptyspots(rand(length(emptyspots)));
        prev_move = [x_cell, y_cell];
        return;        
     end
