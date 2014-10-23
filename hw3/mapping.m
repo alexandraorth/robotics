@@ -108,13 +108,7 @@ function mapping(serPort)
     function in_middle = in_middle_of_cell()
        in_middle = false;
        error = 0.1;
-       
-       disp('x')
-       disp(x_dist)
-       
-       disp('y')
-       disp(y_dist)
-       
+  
        if(x_temp_dist >= diameter || y_temp_dist >= diameter)
           in_middle=true; 
        end
@@ -147,10 +141,11 @@ function mapping(serPort)
            
            if(is_occupied_n == 0)
               emptyspots(end+1) = cell;
+           elseif(strcmp(is_occupied_n, 'X'))
+               chosen_cell = cell;
            end
        catch
            map(cell) = 'X';
-           is_occupied_n = 'X';
            chosen_cell = cell;
        end
        
@@ -160,10 +155,11 @@ function mapping(serPort)
            
            if(is_occupied_s == 0)
               emptyspots(end+1) = cell;
+           elseif(strcmp(is_occupied_s, 'X'))
+               chosen_cell = cell;
            end
        catch
            map(cell) = 'X';
-           is_occupied_s = 'X';
            chosen_cell = cell;
        end
        
@@ -173,10 +169,11 @@ function mapping(serPort)
            
            if(is_occupied_e == 0)
               emptyspots(end+1) = cell;
+           elseif(strcmp(is_occupied_e, 'X'))
+               chosen_cell = cell;
            end
        catch
            map(cell) = 'X';
-           is_occupied_e = 'X';
            chosen_cell = cell;
        end
        
@@ -186,12 +183,20 @@ function mapping(serPort)
            
            if(is_occupied_w == 0)
               emptyspots(end+1) = cell;
+           elseif(strcmp(is_occupied_w, 'X'))
+               chosen_cell = cell;
            end
        catch
            map(cell) = 'X';
-           is_occupied_w = 'X';
            chosen_cell = cell;
        end
+       
+       disp('x coordinate')
+       disp(x_dist)
+       
+       disp('y coordinate')
+       disp(y_dist)
+   
        
        disp('chosen cell')
        disp(chosen_cell)
@@ -249,7 +254,7 @@ function mapping(serPort)
         x_dist = x_dist + distance*sin(ang);
         y_dist = y_dist + distance*cos(ang);
         
-        x_temp_dist = x_dist + distance*sin(ang);
-        y_temp_dist = y_dist + distance*cos(ang);
+        x_temp_dist = x_temp_dist + distance*sin(ang);
+        y_temp_dist = y_temp_dist + distance*cos(ang);
     end
 end
