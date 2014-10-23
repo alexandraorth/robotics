@@ -46,7 +46,9 @@ function mapping(serPort)
     while(true) %need to change to ~ending_direction
       next_cell = decide_move();
       turn(next_cell);
-      SetFwdVelAngVelCreate(serPort, .1, 0); %MOVE
+      
+      disp('MOVING')
+      SetFwdVelAngVelCreate(serPort, .2, 0); %MOVE
 
       while(true)
          updateDistance();
@@ -55,17 +57,20 @@ function mapping(serPort)
             BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
 
         if(BumpRight || BumpLeft || BumpFront)
+            disp('BUMPED')
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_bump();
             backtrack();
             break;
         end
 
-        if(in_middle_of_cell)
+        if(in_middle_of_cell())
+            disp('IN MIDDLE OF CELL')
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_empty();
             break;
         end
+        pause(.1);
       end
     end
 
@@ -86,7 +91,7 @@ function mapping(serPort)
     function in_middle = in_middle_of_cell()
        in_middle = false;
        error = 0.1;
-       if(x_dist/diameter > error && y_dist/diameter > error)
+       if(x_dist/diameter < error && y_dist/diameter < error)
           in_middle=true; 
        end
     end
@@ -96,7 +101,7 @@ function mapping(serPort)
        SetFwdVelAngVelCreate(serPort, .1, 0);
        while(true)
           updateDistance();
-          if(in_middle_of_cell)
+          if(in_middle_of_cell())
               SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
               break;
           end
@@ -104,7 +109,8 @@ function mapping(serPort)
     end
 
     function chosen_cell = decide_move()
-       
+       chosen_cell =  false;
+        
        emptyspots = [];
        x_cell = floor(x_dist/diameter);
        y_cell = floor(y_dist/diameter);
@@ -163,8 +169,10 @@ function mapping(serPort)
            chosen_cell = cell;
        end
        
-       if(chosen_cell)
-           disp(chosen_cell)
+       disp('chosen cell')
+       disp(chosen_cell)
+       
+       if(chosen_cell ~= false)
            prev_move = [x_cell, y_cell]; 
           return;
        end
@@ -175,6 +183,8 @@ function mapping(serPort)
     end
 
     function turn(next_cell)
+        disp(next_cell);
+        disp('next cell above')
         disp(str2double(strsplit(next_cell, '_')))
         disp(prev_move)
        direction_to_move = str2double(strsplit(next_cell, '_')) - prev_move;
