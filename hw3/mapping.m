@@ -24,6 +24,7 @@ function mapping(serPort)
     y_dist = .5*diameter;
     x_temp_dist = 0;
     y_temp_dist = 0;
+    next_move = [0,0];
     prev_move = [0,0];
     direction = 'north';
     ang = 0;
@@ -58,8 +59,8 @@ function mapping(serPort)
     
     %main while loop
     while(true) %need to change to ~ending_direction
-      next_cell = decide_move();
-      turn(next_cell);
+      next_move = decide_move();
+      turn(next_move);
       disp('MOVING')
       SetFwdVelAngVelCreate(serPort, .2, 0); %MOVE
 
@@ -109,7 +110,7 @@ function mapping(serPort)
        in_middle = false;
        error = 0.1;
   
-       if(x_temp_dist >= diameter || y_temp_dist >= diameter)
+       if(abs(x_temp_dist) >= diameter || abs(y_temp_dist) >= diameter)
           in_middle=true; 
        end
    end
@@ -128,15 +129,16 @@ function mapping(serPort)
 
     function chosen_cell = decide_move()
        chosen_cell =  false;
-        
+       
        emptyspots = [];
        x_cell = floor(x_dist/diameter);
        y_cell = floor(y_dist/diameter);
        
+       disp('current cell')
+       disp([x_cell, y_cell]);
+       
        try %get north cell
            cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
-           disp('this is the cell')
-           disp(cell);
            is_occupied_n = map(cell);
            
            if(is_occupied_n == 0)
@@ -196,26 +198,24 @@ function mapping(serPort)
        
        disp('y coordinate')
        disp(y_dist)
-   
-       
-       disp('chosen cell')
-       disp(chosen_cell)
+
        
        if(chosen_cell ~= false)
+           disp('next cell')
+           disp(chosen_cell)
            prev_move = [x_cell, y_cell]; 
           return;
        end
        
        chosen_cell = emptyspots(rand(length(emptyspots)));
+       
+       disp('next cell')
+       disp(chosen_cell)
        prev_move = [x_cell, y_cell];
        return;        
     end
 
     function turn(next_cell)
-        disp(next_cell);
-        disp('next cell above')
-        disp(str2double(strsplit(next_cell, '_')))
-        disp(prev_move)
        direction_to_move = str2double(strsplit(next_cell, '_')) - prev_move;
        direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
        
@@ -250,11 +250,32 @@ function mapping(serPort)
     end
     
     function updateDistance()
-        distance = DistanceSensorRoomba(serPort);        
-        x_dist = x_dist + distance*sin(ang);
-        y_dist = y_dist + distance*cos(ang);
+        difference = DistanceSensorRoomba(serPort); 
+                
+        change_in_move = str2double(strsplit(next_move, '_')) - prev_move;
         
-        x_temp_dist = x_temp_dist + distance*sin(ang);
-        y_temp_dist = y_temp_dist + distance*cos(ang);
+        x_dist = x_dist + (change_in_move(1) * difference);
+        y_dist = y_dist + (change_in_move(2) * difference);
+        
+        disp('x') 
+        disp(x_dist)
+        
+        disp('y')
+        disp(y_dist)
+       
+        
+        x_temp_dist = x_temp_dist + (change_in_move(1) * difference);
+        y_temp_dist = y_temp_dist + (change_in_move(2) * difference);
+        
+        disp('x_temp_dist')
+        disp(x_temp_dist)
+        
+        disp('y_temp_dist')
+        disp(y_temp_dist)
+        
+        %x_dist = x_dist + distance*sin(ang);
+%         y_dist = y_dist + distance*cos(ang);
+        %x_temp_dist = x_temp_dist + distance*sin(ang);
+        %y_temp_dist = y_temp_dist + distance*cos(ang);
     end
 end
