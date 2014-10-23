@@ -19,9 +19,11 @@ function mapping(serPort)
     % Initialize map
     map = containers.Map;
     
-    diameter = .5; %really, unknown. set like this for testing
+    diameter = 1; %really, unknown. set like this for testing
     x_dist = .5*diameter;
     y_dist = .5*diameter;
+    x_temp_dist = 0;
+    y_temp_dist = 0;
     prev_move = [0,0];
     direction = 'north';
     ang = 0;
@@ -41,12 +43,23 @@ function mapping(serPort)
     south(['1_','0']) = ['-90_', 'west'];
     south(['-1_','0']) = ['90_', 'east'];
     
+    west = containers.Map;
+    west(['0_','-1']) = ['180_', 'east'];
+    west(['0_', '1']) = ['0_', 'west'];
+    west(['1_','0']) = ['-90_', 'north'];
+    west(['-1_','0']) = ['90_', 'south'];
+    
+    east = containers.Map;
+    east(['0_','-1']) = ['180_', 'west'];
+    east(['0_', '1']) = ['0_', 'east'];
+    east(['1_','0']) = ['-90_', 'south'];
+    east(['-1_','0']) = ['90_', 'north'];
+    
     
     %main while loop
     while(true) %need to change to ~ending_direction
       next_cell = decide_move();
       turn(next_cell);
-      
       disp('MOVING')
       SetFwdVelAngVelCreate(serPort, .2, 0); %MOVE
 
@@ -58,6 +71,8 @@ function mapping(serPort)
 
         if(BumpRight || BumpLeft || BumpFront)
             disp('BUMPED')
+            x_temp_dist = 0;
+            y_temp_dist = 0;
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_bump();
             backtrack();
@@ -66,6 +81,8 @@ function mapping(serPort)
 
         if(in_middle_of_cell())
             disp('IN MIDDLE OF CELL')
+            x_temp_dist = 0;
+            y_temp_dist = 0;
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_empty();
             break;
@@ -91,10 +108,17 @@ function mapping(serPort)
     function in_middle = in_middle_of_cell()
        in_middle = false;
        error = 0.1;
-       if(x_dist/diameter < error && y_dist/diameter < error)
+       
+       disp('x')
+       disp(x_dist)
+       
+       disp('y')
+       disp(y_dist)
+       
+       if(x_temp_dist >= diameter || y_temp_dist >= diameter)
           in_middle=true; 
        end
-    end
+   end
 
     function backtrack()
        turnAngle(serPort, 0.025, 180);
@@ -189,40 +213,43 @@ function mapping(serPort)
         disp(prev_move)
        direction_to_move = str2double(strsplit(next_cell, '_')) - prev_move;
        direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
-       switch(direction)
-           case 'north'
-               disp('north');
-               disp(strsplit(north(direction_to_move), '_'));
-               holder = strsplit(north(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           case 'south'
-               disp('south');
-               holder = strsplit(south(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           case 'east'
-               disp('east');
-               holder = strsplit(east(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           case 'west'
-               disp('west');
-               holder = strsplit(west(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
+       
+       if( strcmp(direction, 'north'))
+           disp('north');
+           disp(strsplit(north(direction_to_move), '_'));
+           holder = strsplit(north(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif( strcmp(direction, 'south'))
+           disp('south');
+           holder = strsplit(south(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif(strcmp(direction, 'east'))
+           disp('east');
+           holder = strsplit(east(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif(strcmp(direction, 'west'))
+           disp('west');
+           holder = strsplit(west(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
        end
        
        disp('this is the angle')
        disp(angle);
+       disp('this is the direction')
        disp(direction);
        turnAngle(serPort, 1, angle);
     end
     
     function updateDistance()
-        ang = ang + AngleSensorRoomba(serPort);
         distance = DistanceSensorRoomba(serPort);        
         x_dist = x_dist + distance*sin(ang);
         y_dist = y_dist + distance*cos(ang);
+        
+        x_temp_dist = x_dist + distance*sin(ang);
+        y_temp_dist = y_dist + distance*cos(ang);
     end
 end
