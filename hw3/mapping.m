@@ -18,6 +18,7 @@ function mapping(serPort)
     
     % Initialize map
     map = containers.Map;
+    map('0_0') = 0;
     
     diameter = 0.5; %really, unknown. set like this for testing
     x_dist = .5*diameter;
@@ -34,7 +35,7 @@ function mapping(serPort)
     %initalize orientation hash tables
     % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
     north = containers.Map;
-    north(['0_','-1']) = ['3,14_', 'south'];
+    north(['0_','-1']) = ['314_', 'south'];
     north(['-1_','0']) = ['1.57_', 'west'];
     north(['1_','0']) = ['4.71_', 'east'];
     north(['0_','1']) = ['0_','north'];
@@ -94,17 +95,26 @@ function mapping(serPort)
     end
 
     function respond_to_bump()
-       x_cell = floor(x_dist/diameter);
-       y_cell = floor(y_dist/diameter);
+       disp('respond to bump')
         
-       map([strcat(x_cell + '-'), y_cell]) = 1;
+%        x_cell = floor(x_dist/diameter);
+%        y_cell = floor(y_dist/diameter);
+        
+       map(next_move) = 1;
+       disp(keys(map));
+       disp(values(map));
     end
     
     function respond_to_empty()
-       x_cell = floor(x_dist/diameter);
-       y_cell = floor(y_dist/diameter);
+       disp('respond to empty')
         
-       map([strcat(x_cell + '-'), y_cell]) = 0;
+%        x_cell = floor(x_dist/diameter);
+%        y_cell = floor(y_dist/diameter);
+        
+       map(next_move) = 0;
+       
+       disp(keys(map));
+       disp(values(map));
     end
     
     function in_middle = in_middle_of_cell()
@@ -158,90 +168,99 @@ function mapping(serPort)
     end
 
     function chosen_cell = decide_move()
+       disp('decide move')
+        
        chosen_cell =  false;
        
-       emptyspots = [];
+%        emptyspots = int16([]);
+       
        x_cell = prev_move(1);
        y_cell = prev_move(2);
-       
-       disp('current cell')
-       disp([x_cell, y_cell]);
        
        try %get north cell
            cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
            is_occupied_n = map(cell);
-           
-           if(is_occupied_n == 0)
-              emptyspots(end+1) = cell;
-           elseif(strcmp(is_occupied_n, 'X'))
-               chosen_cell = cell;
-           end
        catch
            map(cell) = 'X';
+           is_occupied_n = map(cell);
+           chosen_cell = cell;
+       end
+       
+       if(is_occupied_n == 0)
+           disp(cell);
+           empty_cell = cell;
+%            emptyspots(end+1) = strcat(cell(1), cell(2));
+       elseif(strcmp(is_occupied_n, 'X'))
            chosen_cell = cell;
        end
        
        try %get south cell
            cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
            is_occupied_s = map(cell);
-           
-           if(is_occupied_s == 0)
-              emptyspots(end+1) = cell;
-           elseif(strcmp(is_occupied_s, 'X'))
-               chosen_cell = cell;
-           end
        catch
            map(cell) = 'X';
+           is_occupied_s = map(cell);
+           chosen_cell = cell;
+       end
+        
+       if(is_occupied_s == 0)
+           disp(cell);
+           empty_cell = cell;
+%           emptyspots(end+1) = strcat(cell(1), cell(2));
+       elseif(strcmp(is_occupied_s, 'X'))
            chosen_cell = cell;
        end
        
        try %get east cell
+           disp(cell);
            cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
            is_occupied_e = map(cell);
-           
-           if(is_occupied_e == 0)
-              emptyspots(end+1) = cell;
-           elseif(strcmp(is_occupied_e, 'X'))
-               chosen_cell = cell;
-           end
        catch
            map(cell) = 'X';
+           is_occupied_e = map(cell);
+           chosen_cell = cell;
+       end
+       
+       if(is_occupied_e == 0)
+           empty_cell = cell;
+%           emptyspots(end+1) = strcat(cell(1), cell(2));
+       elseif(strcmp(is_occupied_e, 'X'))
            chosen_cell = cell;
        end
        
        try %get west cell
+           disp(cell);
            cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
            is_occupied_w = map(cell);
-           
-           if(is_occupied_w == 0)
-              emptyspots(end+1) = cell;
-           elseif(strcmp(is_occupied_w, 'X'))
-               chosen_cell = cell;
-           end
        catch
            map(cell) = 'X';
+           is_occupied_w = map(cell);
            chosen_cell = cell;
        end
        
-       disp('x coordinate')
-       disp(x_dist)
+       if(is_occupied_w == 0)
+           empty_cell = cell;
+%           emptyspots(end+1) = strcat(cell(1), cell(2));
+       elseif(strcmp(is_occupied_w, 'X'))
+           chosen_cell = cell;
+       end
        
-       disp('y coordinate')
-       disp(y_dist)
+       disp(keys(map));
+       disp(values(map));
 
-       
        if(chosen_cell ~= false)
            disp('next cell')
            disp(chosen_cell)
 %            prev_move = [x_cell, y_cell]; 
           return;
        end
+
+       chosen_cell = empty_cell;
        
-       chosen_cell = emptyspots(rand(length(emptyspots)));
-       
-       disp('next cell')
-       disp(chosen_cell)
-%        prev_move = [x_cell, y_cell];
+%        disp(emptyspots);
+%        to_return = emptyspots(rand(length(emptyspots)));
+%        chosen_cell = [strcat(num2str(to_return(1)), '_'), num2str(to_return(2))];
+      
        return;        
     end
 
@@ -286,7 +305,7 @@ function mapping(serPort)
     function do_turn(rad)
        totalAngle = 0;
        last_pos_angle = 0;
-       SetFwdVelAngVelCreate(serPort, 0, 0.5);
+       SetFwdVelAngVelCreate(serPort, 0, 0.1);
        % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
        while totalAngle <= rad 
             % Have to update global angle as well
@@ -326,11 +345,11 @@ function mapping(serPort)
         x_temp_dist = x_temp_dist + (change_in_move(1) * difference);
         y_temp_dist = y_temp_dist + (change_in_move(2) * difference);
         
-        disp(change_in_move);
+%         disp(change_in_move);
                 
-        disp(floor(x_dist/diameter));
-        disp(floor(y_dist/diameter));
-        
+%         disp(floor(x_dist/diameter));
+%         disp(floor(y_dist/diameter));
+%         
 %         disp('x_dist')
 %         disp(x_dist)
 %         
