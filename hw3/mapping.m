@@ -31,7 +31,7 @@ function mapping(serPort)
     
     % c(['2','-1']) note: the '2' is the x and the '-1' is the y
 
-    %initalize orientation hash tables
+        %initalize orientation hash tables
     north = containers.Map;
     north(['0_','-1']) = ['180_', 'south'];
     north(['-1_','0']) = ['90_', 'west'];
@@ -39,22 +39,22 @@ function mapping(serPort)
     north(['0_','1']) = ['0_','north'];
     
     south = containers.Map;
-    south(['0_','-1']) = ['180_', 'north'];
-    south(['0_', '1']) = ['0_', 'south'];
-    south(['1_','0']) = ['-90_', 'west'];
-    south(['-1_','0']) = ['90_', 'east'];
-    
+    south(['0_','-1']) = ['0_', 'south'];
+    south(['0_', '1']) = ['180_', 'north'];
+    south(['1_','0']) = ['90_', 'east'];
+    south(['-1_','0']) = ['-90_', 'west'];
+
     west = containers.Map;
-    west(['0_','-1']) = ['180_', 'east'];
-    west(['0_', '1']) = ['0_', 'west'];
-    west(['1_','0']) = ['-90_', 'north'];
-    west(['-1_','0']) = ['90_', 'south'];
+    west(['0_','-1']) = ['90_', 'south'];
+    west(['0_', '1']) = ['-90_', 'north'];
+    west(['1_','0']) = ['180_', 'east'];
+    west(['-1_','0']) = ['0_', 'west'];
     
     east = containers.Map;
-    east(['0_','-1']) = ['180_', 'west'];
-    east(['0_', '1']) = ['0_', 'east'];
-    east(['1_','0']) = ['-90_', 'south'];
-    east(['-1_','0']) = ['90_', 'north'];
+    east(['0_','-1']) = ['-90_', 'south'];
+    east(['0_', '1']) = ['90_', 'north'];
+    east(['1_','0']) = ['0_', 'east'];
+    east(['-1_','0']) = ['180_', 'west'];
     
     
     %main while loop
@@ -131,8 +131,8 @@ function mapping(serPort)
        chosen_cell =  false;
        
        emptyspots = [];
-       x_cell = floor(x_dist/diameter);
-       y_cell = floor(y_dist/diameter);
+       x_cell = prev_move(1);
+       y_cell = prev_move(2);
        
        disp('current cell')
        disp([x_cell, y_cell]);
