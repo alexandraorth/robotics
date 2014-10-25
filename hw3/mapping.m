@@ -97,9 +97,6 @@ function mapping(serPort)
     function respond_to_bump()
        disp('respond to bump')
         
-%        x_cell = floor(x_dist/diameter);
-%        y_cell = floor(y_dist/diameter);
-        
        map(next_move) = 1;
        disp(keys(map));
        disp(values(map));
@@ -107,10 +104,7 @@ function mapping(serPort)
     
     function respond_to_empty()
        disp('respond to empty')
-        
-%        x_cell = floor(x_dist/diameter);
-%        y_cell = floor(y_dist/diameter);
-        
+
        map(next_move) = 0;
        
        disp(keys(map));
@@ -171,12 +165,11 @@ function mapping(serPort)
        disp('decide move')
         
        chosen_cell =  false;
-       
-%        emptyspots = int16([]);
-       
+
        x_cell = prev_move(1);
        y_cell = prev_move(2);
-       
+       pref = 0; %set to 1 if direction of unknown is same as current direction
+
        try %get north cell
            cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
            is_occupied_n = map(cell);
@@ -189,9 +182,12 @@ function mapping(serPort)
        if(is_occupied_n == 0)
            disp(cell);
            empty_cell = cell;
-%            emptyspots(end+1) = strcat(cell(1), cell(2));
        elseif(strcmp(is_occupied_n, 'X'))
            chosen_cell = cell;
+           if (strcmp(direction,'north'))
+               pref = 1;
+               pref_cell = cell;
+           end 
        end
        
        try %get south cell
@@ -206,9 +202,12 @@ function mapping(serPort)
        if(is_occupied_s == 0)
            disp(cell);
            empty_cell = cell;
-%           emptyspots(end+1) = strcat(cell(1), cell(2));
        elseif(strcmp(is_occupied_s, 'X'))
            chosen_cell = cell;
+           if (strcmp(direction,'south'))
+               pref = 1;
+               pref_cell = cell;
+           end 
        end
        
        try %get east cell
@@ -223,9 +222,12 @@ function mapping(serPort)
        
        if(is_occupied_e == 0)
            empty_cell = cell;
-%           emptyspots(end+1) = strcat(cell(1), cell(2));
        elseif(strcmp(is_occupied_e, 'X'))
            chosen_cell = cell;
+           if (strcmp(direction,'east'))
+               pref = 1;
+               pref_cell = cell;
+           end 
        end
        
        try %get west cell
@@ -240,9 +242,12 @@ function mapping(serPort)
        
        if(is_occupied_w == 0)
            empty_cell = cell;
-%           emptyspots(end+1) = strcat(cell(1), cell(2));
        elseif(strcmp(is_occupied_w, 'X'))
            chosen_cell = cell;
+           if (strcmp(direction,'west'))
+               pref = 1;
+               pref_cell = cell;
+           end 
        end
        
        disp(keys(map));
@@ -251,15 +256,13 @@ function mapping(serPort)
        if(chosen_cell ~= false)
            disp('next cell')
            disp(chosen_cell)
-%            prev_move = [x_cell, y_cell]; 
+           if (pref == 1)
+              chosen_cell = pref_cell;
+           end
           return;
        end
 
        chosen_cell = empty_cell;
-       
-%        disp(emptyspots);
-%        to_return = emptyspots(rand(length(emptyspots)));
-%        chosen_cell = [strcat(num2str(to_return(1)), '_'), num2str(to_return(2))];
       
        return;        
     end
@@ -310,8 +313,6 @@ function mapping(serPort)
        while totalAngle <= rad 
             % Have to update global angle as well
             angle_change = AngleSensorRoomba(serPort);
-            %disp('angle_change')
-            %disp(angle_change)
             % Store last known postive angle value
             if (angle_change > 0)
                 last_pos_angle = angle_change;
@@ -322,8 +323,6 @@ function mapping(serPort)
             else
                 totalAngle = totalAngle + last_pos_angle;
             end
-            %disp('totalAngle')
-            %disp(totalAngle)
             pause(.01)
         end
     end    
@@ -345,22 +344,6 @@ function mapping(serPort)
         x_temp_dist = x_temp_dist + (change_in_move(1) * difference);
         y_temp_dist = y_temp_dist + (change_in_move(2) * difference);
         
-%         disp(change_in_move);
-                
-%         disp(floor(x_dist/diameter));
-%         disp(floor(y_dist/diameter));
-%         
-%         disp('x_dist')
-%         disp(x_dist)
-%         
-%         disp('y_dist')
-%         disp(y_dist)
-%         
-%         disp('x temp dist')
-%         disp(x_temp_dist)
-%         
-%         disp('y temp dist')
-%         disp(y_temp_dist)
-        
+
     end
 end
