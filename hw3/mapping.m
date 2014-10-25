@@ -93,15 +93,15 @@ function mapping(serPort)
     end
 
     function respond_to_bump()
-       x_cell = floor(x_dist/diameter);
-       y_cell = floor(y_dist/diameter);
+       x_cell = prev_move(1);
+       y_cell = prev_move(2);
         
-       map([x_cell + '-', y_cell]) = 1;
+       map([strcat(x_cell + '-'), y_cell]) = 1;
     end
     
     function respond_to_empty()
-       x_cell = floor(x_dist/diameter);
-       y_cell = floor(y_dist/diameter);
+       x_cell = prev_move(1);
+       y_cell = prev_move(2);
         
        map([strcat(x_cell + '-'), y_cell]) = 0;
     end
@@ -250,32 +250,29 @@ function mapping(serPort)
     end
     
     function updateDistance()
-        difference = DistanceSensorRoomba(serPort); 
-                
-        change_in_move = str2double(strsplit(next_move, '_')) - prev_move;
+        difference = DistanceSensorRoomba(serPort);         
+        
+        if( strcmp(direction, 'north'))
+           change_in_move = [0,1];
+        elseif( strcmp(direction, 'south'))
+           change_in_move = [0,-1];
+        elseif(strcmp(direction, 'east'))
+           change_in_move = [1,0];
+        elseif(strcmp(direction, 'west'))
+           change_in_move = [-1,0];
+        end
         
         x_dist = x_dist + (change_in_move(1) * difference);
         y_dist = y_dist + (change_in_move(2) * difference);
-        
-        disp('x') 
-        disp(x_dist)
-        
-        disp('y')
-        disp(y_dist)
-       
-        
         x_temp_dist = x_temp_dist + (change_in_move(1) * difference);
         y_temp_dist = y_temp_dist + (change_in_move(2) * difference);
         
-        disp('x_temp_dist')
-        disp(x_temp_dist)
+        disp(change_in_move);
         
-        disp('y_temp_dist')
-        disp(y_temp_dist)
+        disp('x_dist')
+        disp(x_dist)
         
-        %x_dist = x_dist + distance*sin(ang);
-%         y_dist = y_dist + distance*cos(ang);
-        %x_temp_dist = x_temp_dist + distance*sin(ang);
-        %y_temp_dist = y_temp_dist + distance*cos(ang);
+        disp('y_dist')
+        disp(y_dist)
     end
 end
