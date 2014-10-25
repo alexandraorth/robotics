@@ -19,14 +19,14 @@ function mapping(serPort)
     % Initialize map
     map = containers.Map;
     
-    diameter = 1; %really, unknown. set like this for testing
+    diameter = 0.5; %really, unknown. set like this for testing
     x_dist = .5*diameter;
     y_dist = .5*diameter;
     x_temp_dist = 0;
     y_temp_dist = 0;
     next_move = [0,0];
     prev_move = [0,0];
-    direction = 'north';
+    direction = 'east';
     ang = 0;
     
     % c(['2','-1']) note: the '2' is the x and the '-1' is the y
@@ -61,10 +61,7 @@ function mapping(serPort)
     while(true) %need to change to ~ending_direction
       next_move = decide_move();
       
-      direction_to_move = str2double(strsplit(next_move, '_')) - prev_move;
-      direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
-      
-      turn(direction_to_move);
+      turn(next_move);
       disp('MOVING')
       SetFwdVelAngVelCreate(serPort, .2, 0); %MOVE
 
@@ -120,7 +117,7 @@ function mapping(serPort)
 
     function in_middle = backtrack_to_middle()
        in_middle = false;
-       error = 0.1;
+       error = 0.05;
        
        if(abs(x_temp_dist) <= (0 + error) && abs(y_temp_dist) <= (0 + error))
           in_middle = true; 
@@ -128,9 +125,11 @@ function mapping(serPort)
     end
 
     function backtrack()
-       disp('in backtrack')
+       disp('in backtrack');
 
-       turnAngle(serPort, 1, 180) 
+       turnAngle(serPort, 0.1, -180);
+      
+       pause(1);
        
        if(strcmp(direction, 'north') == 1)
            direction = 'south';
@@ -245,7 +244,10 @@ function mapping(serPort)
        return;        
     end
 
-    function turn(direction_to_move)
+    function turn(next_move)
+       direction_to_move = str2double(strsplit(next_move, '_')) - prev_move;
+       direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
+
        disp('direction to move')
        disp(direction_to_move);
               
@@ -277,7 +279,7 @@ function mapping(serPort)
        disp(angle);
        disp('this is the direction')
        disp(direction);
-       turnAngle(serPort, 1, angle);
+       turnAngle(serPort, 0.1, angle);
     end
     
     function updateDistance()
@@ -299,18 +301,21 @@ function mapping(serPort)
         y_temp_dist = y_temp_dist + (change_in_move(2) * difference);
         
         disp(change_in_move);
+                
+        disp(floor(x_dist/diameter));
+        disp(floor(y_dist/diameter));
         
-        disp('x_dist')
-        disp(x_dist)
-        
-        disp('y_dist')
-        disp(y_dist)
-        
-        disp('x temp dist')
-        disp(x_temp_dist)
-        
-        disp('y temp dist')
-        disp(y_temp_dist)
+%         disp('x_dist')
+%         disp(x_dist)
+%         
+%         disp('y_dist')
+%         disp(y_dist)
+%         
+%         disp('x temp dist')
+%         disp(x_temp_dist)
+%         
+%         disp('y temp dist')
+%         disp(y_temp_dist)
         
     end
 end
