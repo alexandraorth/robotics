@@ -31,30 +31,31 @@ function mapping(serPort)
     
     % c(['2','-1']) note: the '2' is the x and the '-1' is the y
 
-        %initalize orientation hash tables
+    %initalize orientation hash tables
+    % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
     north = containers.Map;
-    north(['0_','-1']) = ['180_', 'south'];
-    north(['-1_','0']) = ['90_', 'west'];
-    north(['1_','0']) = ['-90_', 'east'];
+    north(['0_','-1']) = ['3,14_', 'south'];
+    north(['-1_','0']) = ['1.57_', 'west'];
+    north(['1_','0']) = ['4.71_', 'east'];
     north(['0_','1']) = ['0_','north'];
     
     south = containers.Map;
     south(['0_','-1']) = ['0_', 'south'];
-    south(['0_', '1']) = ['180_', 'north'];
-    south(['1_','0']) = ['90_', 'east'];
-    south(['-1_','0']) = ['-90_', 'west'];
+    south(['0_', '1']) = ['3.14_', 'north'];
+    south(['1_','0']) = ['1.57_', 'east'];
+    south(['-1_','0']) = ['4.71_', 'west'];
 
     west = containers.Map;
-    west(['0_','-1']) = ['90_', 'south'];
-    west(['0_', '1']) = ['-90_', 'north'];
-    west(['1_','0']) = ['180_', 'east'];
+    west(['0_','-1']) = ['1.57_', 'south'];
+    west(['0_', '1']) = ['4.71_', 'north'];
+    west(['1_','0']) = ['3.14_', 'east'];
     west(['-1_','0']) = ['0_', 'west'];
     
     east = containers.Map;
-    east(['0_','-1']) = ['-90_', 'south'];
-    east(['0_', '1']) = ['90_', 'north'];
+    east(['0_','-1']) = ['4.71_', 'south'];
+    east(['0_', '1']) = ['1.57_', 'north'];
     east(['1_','0']) = ['0_', 'east'];
-    east(['-1_','0']) = ['180_', 'west'];
+    east(['-1_','0']) = ['3.14_', 'west'];
     
     
     %main while loop
@@ -127,7 +128,7 @@ function mapping(serPort)
     function backtrack()
        disp('in backtrack');
 
-       turnAngle(serPort, 0.1, -180);
+       do_turn(3.14);
       
        pause(1);
        
@@ -279,9 +280,34 @@ function mapping(serPort)
        disp(angle);
        disp('this is the direction')
        disp(direction);
-       turnAngle(serPort, 0.1, angle);
+       do_turn(angle);
     end
     
+    function do_turn(rad)
+       totalAngle = 0;
+       last_pos_angle = 0;
+       SetFwdVelAngVelCreate(serPort, 0, 0.5);
+       % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
+       while totalAngle <= rad 
+            % Have to update global angle as well
+            angle_change = AngleSensorRoomba(serPort);
+            %disp('angle_change')
+            %disp(angle_change)
+            % Store last known postive angle value
+            if (angle_change > 0)
+                last_pos_angle = angle_change;
+            end
+            % Only add to totalangle if the angle value is positive
+            if (angle_change >= 0)
+                totalAngle = totalAngle + angle_change;
+            else
+                totalAngle = totalAngle + last_pos_angle;
+            end
+            %disp('totalAngle')
+            %disp(totalAngle)
+            pause(.01)
+        end
+    end    
     function updateDistance()
         difference = DistanceSensorRoomba(serPort);         
         
