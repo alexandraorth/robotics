@@ -60,7 +60,11 @@ function mapping(serPort)
     %main while loop
     while(true) %need to change to ~ending_direction
       next_move = decide_move();
-      turn(next_move);
+      
+      direction_to_move = str2double(strsplit(next_move, '_')) - prev_move;
+      direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
+      
+      turn(direction_to_move);
       disp('MOVING')
       SetFwdVelAngVelCreate(serPort, .2, 0); %MOVE
 
@@ -72,8 +76,6 @@ function mapping(serPort)
 
         if(BumpRight || BumpLeft || BumpFront)
             disp('BUMPED')
-            x_temp_dist = 0;
-            y_temp_dist = 0;
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_bump();
             backtrack();
@@ -84,6 +86,7 @@ function mapping(serPort)
             disp('IN MIDDLE OF CELL')
             x_temp_dist = 0;
             y_temp_dist = 0;
+            prev_move = str2double(strsplit(next_move, '_'));
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_empty();
             break;
@@ -93,15 +96,15 @@ function mapping(serPort)
     end
 
     function respond_to_bump()
-       x_cell = prev_move(1);
-       y_cell = prev_move(2);
+       x_cell = floor(x_dist/diameter);
+       y_cell = floor(y_dist/diameter);
         
        map([strcat(x_cell + '-'), y_cell]) = 1;
     end
     
     function respond_to_empty()
-       x_cell = prev_move(1);
-       y_cell = prev_move(2);
+       x_cell = floor(x_dist/diameter);
+       y_cell = floor(y_dist/diameter);
         
        map([strcat(x_cell + '-'), y_cell]) = 0;
     end
@@ -113,18 +116,45 @@ function mapping(serPort)
        if(abs(x_temp_dist) >= diameter || abs(y_temp_dist) >= diameter)
           in_middle=true; 
        end
-   end
+    end
+
+    function in_middle = backtrack_to_middle()
+       in_middle = false;
+       error = 0.1;
+       
+       if(abs(x_temp_dist) <= (0 + error) && abs(y_temp_dist) <= (0 + error))
+          in_middle = true; 
+       end
+    end
 
     function backtrack()
-       turnAngle(serPort, 0.025, 180);
+       disp('in backtrack')
+
+       turnAngle(serPort, 1, 180) 
+       
+       if(strcmp(direction, 'north') == 1)
+           direction = 'south';
+       elseif(strcmp(direction, 'south') == 1)
+           direction = 'north';
+       elseif(strcmp(direction, 'east') == 1)
+           direction = 'west';
+       elseif(strcmp(direction, 'west') == 1)
+           direction = 'east';
+       end
+       
        SetFwdVelAngVelCreate(serPort, .1, 0);
        while(true)
+          disp('backtrack loop')
           updateDistance();
-          if(in_middle_of_cell())
+          if(backtrack_to_middle())
               SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
               break;
           end
+          pause(.1);
        end
+
+      x_temp_dist = 0;
+      y_temp_dist = 0;
     end
 
     function chosen_cell = decide_move()
@@ -203,7 +233,7 @@ function mapping(serPort)
        if(chosen_cell ~= false)
            disp('next cell')
            disp(chosen_cell)
-           prev_move = [x_cell, y_cell]; 
+%            prev_move = [x_cell, y_cell]; 
           return;
        end
        
@@ -211,14 +241,14 @@ function mapping(serPort)
        
        disp('next cell')
        disp(chosen_cell)
-       prev_move = [x_cell, y_cell];
+%        prev_move = [x_cell, y_cell];
        return;        
     end
 
-    function turn(next_cell)
-       direction_to_move = str2double(strsplit(next_cell, '_')) - prev_move;
-       direction_to_move = [strcat(num2str(direction_to_move(1)), '_'), num2str(direction_to_move(2))];
-       
+    function turn(direction_to_move)
+       disp('direction to move')
+       disp(direction_to_move);
+              
        if( strcmp(direction, 'north'))
            disp('north');
            disp(strsplit(north(direction_to_move), '_'));
@@ -232,6 +262,7 @@ function mapping(serPort)
            angle = str2double(holder(1));
        elseif(strcmp(direction, 'east'))
            disp('east');
+           disp(east(direction_to_move));
            holder = strsplit(east(direction_to_move), '_');
            direction = holder(2);
            angle = str2double(holder(1));
@@ -274,5 +305,12 @@ function mapping(serPort)
         
         disp('y_dist')
         disp(y_dist)
+        
+        disp('x temp dist')
+        disp(x_temp_dist)
+        
+        disp('y temp dist')
+        disp(y_temp_dist)
+        
     end
 end
