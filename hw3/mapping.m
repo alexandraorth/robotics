@@ -302,16 +302,19 @@ function mapping(serPort)
           return;
        end
 
-       disp(emptyspots)
-       chosen_spot = emptyspots(datasample(emptyspots,1));
-       if (chosen_spot == 0) %north
-           chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
-       elseif (chosen_spot == 1) %east
-           chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
-       elseif (chosen_spot == 2) %south
-           chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
-       else %west
-           chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
+       try
+           chosen_spot = emptyspots(datasample(emptyspots,1));
+           if (chosen_spot == 0) %north
+               chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
+           elseif (chosen_spot == 1) %east
+               chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
+           elseif (chosen_spot == 2) %south
+               chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
+           else %west
+               chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
+           end
+       catch % catch statement entered if only empty cell is prevous cell
+           chosen_cell = real_prev_move_str;
        end
        
        % prev_move only set after already in middle of cell robot moves to
