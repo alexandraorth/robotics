@@ -355,6 +355,43 @@ function mapping(serPort)
        disp('real prev move string');
        disp(real_prev_move_str);
        
+       pref_empty_direction = 'none'
+       for i = 1:length(emptyspots)
+          if(strcmp(direction,'north'))
+              if(emptyspots(i) == 0)
+                  pref_empty_direction = 'north';
+              end
+          elseif(strcmp(direction,'east'))
+              if(emptyspots(i) == 1)
+                  pref_empty_direction = 'east';
+              end
+          elseif(strcmp(direction,'south'))
+              if(emptyspots(i) == 2)
+                  pref_empty_direction = 'south';
+              end
+          else
+              if(emptyspots(i) == 3)
+                  pref_empty_direction = 'west';
+              end
+          end
+       end
+       
+       if (strcmp(pref_empty_direction, 'none') ~= true)
+           disp('pref_empty_direction')
+           disp(pref_empty_direction)
+           if (strcmp(pref_empty_direction, 'north')) %north
+               chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
+           elseif (strcmp(pref_empty_direction, 'east')) %east
+               chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
+           elseif (strcmp(pref_empty_direction, 'south')) %south
+               chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
+           else %west
+               chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
+           end
+           real_prev_move = prev_move;    
+           return;
+       end
+       
        try
            chosen_spot = datasample(emptyspots,1);
            if (chosen_spot == 0) %north
