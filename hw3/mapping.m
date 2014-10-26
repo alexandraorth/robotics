@@ -31,8 +31,9 @@ function mapping(serPort)
     next_move = [0,0];
     prev_move = [0,0];
     real_prev_move = [0,0];
-    direction = 'north';
+    direction = 'south';
     been_reassigned = false;
+    COMPENSATION = 0.02;
     ang = 0;
     
     % c(['2','-1']) note: the '2' is the x and the '-1' is the y
@@ -84,6 +85,9 @@ function mapping(serPort)
             disp('BUMPED')
             SetFwdVelAngVelCreate(serPort, 0, 0); %STOP
             respond_to_bump();
+            if(been_reassigned == true)
+                break;
+            end
             backtrack();
             break;
         end
@@ -124,15 +128,15 @@ function mapping(serPort)
                 been_reassigned = true;
             else
                 map(next_move) = 1;
+                draw_rectangle(next_move, 1);
             end
         catch
             map(next_move) = 1;
+            draw_rectangle(next_move, 1);
         end
        
        disp(keys(map));
        disp(values(map));
-       
-       draw_rectangle(next_move, 1);
     end
     
     function respond_to_empty()
@@ -143,15 +147,16 @@ function mapping(serPort)
                 been_reassigned = true;
             else
                 map(next_move) = 0;
+                draw_rectangle(next_move, 0);
             end
         catch
             map(next_move) = 0;
+            draw_rectangle(next_move, 0);
         end
         
         disp(keys(map));
         disp(values(map));
     
-        draw_rectangle(next_move, 0);
     end
     
     function in_middle = in_middle_of_cell()
@@ -175,7 +180,7 @@ function mapping(serPort)
     function backtrack()
        disp('in backtrack');
 
-       do_turn(3.14);
+       do_turn(3.14-COMPENSATION);
       
        pause(.001);
        
@@ -229,6 +234,8 @@ function mapping(serPort)
            map(cell) = 'X';
            is_occupied_n = map(cell);
            chosen_cell = cell;
+           disp('assigning unknown in n catch')
+           disp(chosen_cell)
        end
        
        if(is_occupied_n == 0)
@@ -238,6 +245,8 @@ function mapping(serPort)
            end
        elseif(strcmp(is_occupied_n, 'X'))
            chosen_cell = cell;
+           disp('assigning unknown in n else')
+           disp(chosen_cell)
            if (strcmp(direction,'north'))
                pref = 1;
                pref_cell = cell;
@@ -252,6 +261,8 @@ function mapping(serPort)
            map(cell) = 'X';
            is_occupied_s = map(cell);
            chosen_cell = cell;
+           disp('assigning unknown in n catch')
+           disp(chosen_cell)
        end
         
        if(is_occupied_s == 0)
@@ -261,6 +272,8 @@ function mapping(serPort)
            end
        elseif(strcmp(is_occupied_s, 'X'))
            chosen_cell = cell;
+           disp('assigning unknown in s else')
+           disp(chosen_cell)
            if (strcmp(direction,'south'))
                pref = 1;
                pref_cell = cell;
@@ -275,6 +288,8 @@ function mapping(serPort)
            map(cell) = 'X';
            is_occupied_e = map(cell);
            chosen_cell = cell;
+           disp('assigning unknown in e catch')
+           disp(chosen_cell)
        end
        
        if(is_occupied_e == 0)
@@ -284,6 +299,8 @@ function mapping(serPort)
            end
        elseif(strcmp(is_occupied_e, 'X'))
            chosen_cell = cell;
+           disp('assigning unknown in e else')
+           disp(chosen_cell)
            if (strcmp(direction,'east'))
                pref = 1;
                pref_cell = cell;
@@ -298,6 +315,8 @@ function mapping(serPort)
            map(cell) = 'X';
            is_occupied_w = map(cell);
            chosen_cell = cell;
+           disp('assigning unknown in w catch')
+           disp(chosen_cell)
        end
        
        if(is_occupied_w == 0)
@@ -307,6 +326,8 @@ function mapping(serPort)
            end
        elseif(strcmp(is_occupied_w, 'X'))
            chosen_cell = cell;
+           disp('assigning unknown in w else')
+           disp(chosen_cell)
            if (strcmp(direction,'west'))
                pref = 1;
                pref_cell = cell;
@@ -317,35 +338,50 @@ function mapping(serPort)
        disp(values(map));
 
        if(chosen_cell ~= false)
-           disp('next cell')
-           disp(chosen_cell)
            if (pref == 1)
               chosen_cell = pref_cell;
+              disp('chosen cell was set to pref cell');
+              disp(pref_cell);
            end
-           disp('chosen_cell')
+           disp('chosening an unknown cell')
            disp(chosen_cell)
           return;
        end
 
+       disp('empty spots');
+       disp(emptyspots);
+       
+       disp('real prev move string');
+       disp(real_prev_move_str);
+       
        try
            chosen_spot = emptyspots(datasample(emptyspots,1));
            if (chosen_spot == 0) %north
                chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
+               disp('chosen cell set to emptyspots north');
+               disp(chosen_cell);
            elseif (chosen_spot == 1) %east
                chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
+               disp('chosen cell set to emptyspots east');
+               disp(chosen_cell);
            elseif (chosen_spot == 2) %south
                chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
+               disp('chosen cell set to emptyspots south');
+               disp(chosen_cell);
            else %west
                chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
+               disp('chosen cell set to emptyspots west');
+               disp(chosen_cell);
            end
        catch % catch statement entered if only empty cell is prevous cell
+           disp('in catch, setting chosen to real');
            chosen_cell = real_prev_move_str;
        end
        
        % prev_move only set after already in middle of cell robot moves to
        % before this assignment, real_prev_move is the previous move
        real_prev_move = prev_move;    
-       disp('chosen_cell')
+       disp('choosing an empty cell')
        disp(chosen_cell)
        return;        
     end
@@ -363,33 +399,28 @@ function mapping(serPort)
        disp('direction to move')
        disp(direction_to_move);
        
-       try
-           if( strcmp(direction, 'north'))
-               disp('north');
-               disp(strsplit(north(direction_to_move), '_'));
-               holder = strsplit(north(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           elseif( strcmp(direction, 'south'))
-               disp('south');
-               holder = strsplit(south(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           elseif(strcmp(direction, 'east'))
-               disp('east');
-               disp(east(direction_to_move));
-               holder = strsplit(east(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           elseif(strcmp(direction, 'west'))
-               disp('west');
-               holder = strsplit(west(direction_to_move), '_');
-               direction = holder(2);
-               angle = str2double(holder(1));
-           end
-       catch
-           been_reassigned = true;
-           return;
+       if( strcmp(direction, 'north'))
+           disp('north');
+           disp(strsplit(north(direction_to_move), '_'));
+           holder = strsplit(north(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif( strcmp(direction, 'south'))
+           disp('south');
+           holder = strsplit(south(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif(strcmp(direction, 'east'))
+           disp('east');
+           disp(east(direction_to_move));
+           holder = strsplit(east(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
+       elseif(strcmp(direction, 'west'))
+           disp('west');
+           holder = strsplit(west(direction_to_move), '_');
+           direction = holder(2);
+           angle = str2double(holder(1));
        end
        
        disp('this is the angle')
@@ -401,7 +432,7 @@ function mapping(serPort)
     end
     
     function do_turn(rad)
-        rad = rad-0.02;
+        rad = rad-COMPENSATION;
        totalAngle = 0;
        last_pos_angle = 0;
        SetFwdVelAngVelCreate(serPort, 0, 0.2);
