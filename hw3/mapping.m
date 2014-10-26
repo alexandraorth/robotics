@@ -23,7 +23,7 @@ function mapping(serPort)
     rect = rectangle('Position', [0, 0, 1, 1]);
     set(rect, 'FaceColor', 'b');
     
-    diameter = 0.5; %really, unknown. set like this for testing
+    diameter = 0.33; %really, unknown. set like this for testing
     x_dist = .5*diameter;
     y_dist = .5*diameter;
     x_temp_dist = 0;
@@ -31,7 +31,7 @@ function mapping(serPort)
     next_move = [0,0];
     prev_move = [0,0];
     real_prev_move = [0,0];
-    direction = 'south';
+    direction = 'east';
     been_reassigned = false;
     COMPENSATION = 0.02;
     ang = 0;
@@ -180,7 +180,7 @@ function mapping(serPort)
     function backtrack()
        disp('in backtrack');
 
-       do_turn(3.14-COMPENSATION);
+       do_turn(3.14);
       
        pause(.001);
        
@@ -345,6 +345,7 @@ function mapping(serPort)
            end
            disp('chosening an unknown cell')
            disp(chosen_cell)
+           real_prev_move = prev_move;  
           return;
        end
 
@@ -355,20 +356,24 @@ function mapping(serPort)
        disp(real_prev_move_str);
        
        try
-           chosen_spot = emptyspots(datasample(emptyspots,1));
+           chosen_spot = datasample(emptyspots,1);
            if (chosen_spot == 0) %north
+               disp('in 0')
                chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
                disp('chosen cell set to emptyspots north');
                disp(chosen_cell);
            elseif (chosen_spot == 1) %east
+               disp('in 1')
                chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
                disp('chosen cell set to emptyspots east');
                disp(chosen_cell);
            elseif (chosen_spot == 2) %south
+               disp('in 2')
                chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
                disp('chosen cell set to emptyspots south');
                disp(chosen_cell);
            else %west
+               disp('in 3')
                chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
                disp('chosen cell set to emptyspots west');
                disp(chosen_cell);
