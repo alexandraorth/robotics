@@ -19,6 +19,9 @@ function mapping(serPort)
     % Initialize map
     map = containers.Map;
     map('0_0') = 0;
+    figure;
+    rect = rectangle('Position', [0, 0, 1, 1]);
+    set(rect, 'FaceColor', 'b');
     
     diameter = 0.5; %really, unknown. set like this for testing
     x_dist = .5*diameter;
@@ -28,7 +31,7 @@ function mapping(serPort)
     next_move = [0,0];
     prev_move = [0,0];
     real_prev_move = [0,0];
-    direction = 'east';
+    direction = 'north';
     ang = 0;
     
     % c(['2','-1']) note: the '2' is the x and the '-1' is the y
@@ -36,7 +39,7 @@ function mapping(serPort)
     %initalize orientation hash tables
     % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
     north = containers.Map;
-    north(['0_','-1']) = ['314_', 'south'];
+    north(['0_','-1']) = ['3.14_', 'south'];
     north(['-1_','0']) = ['1.57_', 'west'];
     north(['1_','0']) = ['4.71_', 'east'];
     north(['0_','1']) = ['0_','north'];
@@ -59,6 +62,7 @@ function mapping(serPort)
     east(['1_','0']) = ['0_', 'east'];
     east(['-1_','0']) = ['3.14_', 'west'];
     
+   
     
     %main while loop
     while(true) %need to change to ~ending_direction
@@ -95,21 +99,40 @@ function mapping(serPort)
       end
     end
 
+    function draw_rectangle(x_y, color)
+        x_y = str2double(strsplit(x_y, '_'));
+        x = x_y(1);
+        y = x_y(2);
+        
+        rect = rectangle('Position', [x, y, 1, 1]);
+        if(color == 0)
+           set(rect, 'FaceColor', 'b'); 
+        elseif(color == 1)
+           set(rect, 'FaceColor', 'r'); 
+        end
+        
+        hold on; 
+    end
+    
     function respond_to_bump()
        disp('respond to bump')
         
        map(next_move) = 1;
        disp(keys(map));
        disp(values(map));
+       
+       draw_rectangle(next_move, 1);
     end
     
     function respond_to_empty()
-       disp('respond to empty')
-
-       map(next_move) = 0;
-       
-       disp(keys(map));
-       disp(values(map));
+        disp('respond to empty')
+        
+        map(next_move) = 0;
+        
+        disp(keys(map));
+        disp(values(map));
+    
+        draw_rectangle(next_move, 0);
     end
     
     function in_middle = in_middle_of_cell()
@@ -337,9 +360,10 @@ function mapping(serPort)
     end
     
     function do_turn(rad)
+        rad = rad-0.05;
        totalAngle = 0;
        last_pos_angle = 0;
-       SetFwdVelAngVelCreate(serPort, 0, 0.1);
+       SetFwdVelAngVelCreate(serPort, 0, 0.2);
        % 6.28 = 360 deg, 3.14 = 180, 1.57 = 90, 4.71 = -90
        while totalAngle <= rad 
             % Have to update global angle as well
