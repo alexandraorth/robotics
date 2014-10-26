@@ -27,6 +27,7 @@ function mapping(serPort)
     y_temp_dist = 0;
     next_move = [0,0];
     prev_move = [0,0];
+    real_prev_move = [0,0];
     direction = 'east';
     ang = 0;
     
@@ -163,12 +164,14 @@ function mapping(serPort)
 
     function chosen_cell = decide_move()
        disp('decide move')
-        
-       chosen_cell =  false;
 
+       chosen_cell =  false;
+       emptyspots = []; % 0 = north, 1 = east, 2 = south, 3 = west
+       
        x_cell = prev_move(1);
        y_cell = prev_move(2);
        pref = 0; %set to 1 if direction of unknown is same as current direction
+       real_prev_move_str = [strcat(num2str(real_prev_move(1)), '_'), num2str(real_prev_move(2))];
 
        try %get north cell
            cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
@@ -182,6 +185,9 @@ function mapping(serPort)
        if(is_occupied_n == 0)
            disp(cell);
            empty_cell = cell;
+           if (strcmp(empty_cell,real_prev_move_str) ~= true)
+               emptyspots(end+1) = 0;
+           end
        elseif(strcmp(is_occupied_n, 'X'))
            chosen_cell = cell;
            if (strcmp(direction,'north'))
@@ -202,6 +208,9 @@ function mapping(serPort)
        if(is_occupied_s == 0)
            disp(cell);
            empty_cell = cell;
+           if (strcmp(empty_cell,real_prev_move_str) ~= true)
+               emptyspots(end+1) = 2;
+           end
        elseif(strcmp(is_occupied_s, 'X'))
            chosen_cell = cell;
            if (strcmp(direction,'south'))
@@ -222,6 +231,9 @@ function mapping(serPort)
        
        if(is_occupied_e == 0)
            empty_cell = cell;
+           if (strcmp(empty_cell,real_prev_move_str) ~= true)
+               emptyspots(end+1) = 1;
+           end
        elseif(strcmp(is_occupied_e, 'X'))
            chosen_cell = cell;
            if (strcmp(direction,'east'))
@@ -242,6 +254,10 @@ function mapping(serPort)
        
        if(is_occupied_w == 0)
            empty_cell = cell;
+           if (strcmp(empty_cell,real_prev_move_str) ~= true)
+               emptyspots(end+1) = 3;
+           end
+%           emptyspots(end+1) = strcat(cell(1), cell(2));
        elseif(strcmp(is_occupied_w, 'X'))
            chosen_cell = cell;
            if (strcmp(direction,'west'))
@@ -259,13 +275,28 @@ function mapping(serPort)
            if (pref == 1)
               chosen_cell = pref_cell;
            end
+%            prev_move = [x_cell, y_cell]; 
           return;
        end
 
-       chosen_cell = empty_cell;
-      
+       disp(emptyspots)
+       chosen_spot = emptyspots(datasample(emptyspots,1));
+       if (chosen_spot == 0) %north
+           chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell + 1)];
+       elseif (chosen_spot == 1) %east
+           chosen_cell = [strcat(num2str(x_cell + 1), '_'), num2str(y_cell)];
+       elseif (chosen_spot == 2) %south
+           chosen_cell = [strcat(num2str(x_cell), '_'), num2str(y_cell - 1)];
+       else %west
+           chosen_cell = [strcat(num2str(x_cell - 1), '_'), num2str(y_cell)];
+       end
+       
+       % prev_move only set after already in middle of cell robot moves to
+       % before this assignment, real_prev_move is the previous move
+       real_prev_move = prev_move;    
        return;        
     end
+
 
     function turn(next_move)
        direction_to_move = str2double(strsplit(next_move, '_')) - prev_move;
