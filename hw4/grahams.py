@@ -1,5 +1,11 @@
-import sys
+import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import matplotlib.patches as patches
+from matplotlib import collections  as mc
+import numpy as np
+import Queue
 import math 
+import sys
 
 def grahams(obstacle):
 	obstacle = sorted(obstacle, key=lambda x: (x[1], -x[0]))
@@ -31,8 +37,8 @@ def sttl(p1, p2, p3):
 	difference = (p2[0] - p1[0])*(p3[1] - p1[1]) - (p2[1] - p1[1])*(p3[0]-p1[0]);
 	return difference > 0 
 
-def growobstacle(coordinates):
-	rd = 0.35 #robotdiameter
+def grow_obstacle(coordinates):
+	rd = 0.5 #robotdiameter
 	newcoordinates = []
 
 	for c in coordinates:
@@ -43,11 +49,248 @@ def growobstacle(coordinates):
 
 	return newcoordinates
 
+def create_obstacle_edges(obstacles):
+	edges = []
+	for obstacle in obstacles:
+		for i in range(0, len(obstacle) - 1):
+			edges.append([obstacle[i], obstacle[i+1]])
+
+	return edges
+
+def get_vertices(obstacles):
+	vertices = []
+	for obstacle in obstacles:
+		for i in range(0, len(obstacle) - 1):
+			vertices.append(obstacle[i])
+	
+	return vertices
+
+def create_vertex_edges(vertices):
+	edges = []
+	for i in vertices:
+		for j in vertices:
+			if j > i:
+				edges.append([j, i])
+
+	return edges
+
+def on_segment(p, q, r):
+	if (q[0] <= max(p[0], r[0]) 
+		and q[0] >= min(p[0], r[0]) 
+		and q[1] <= max(p[1], r[1])
+		and q[1] >= min(p[1], r[1])):
+		return True
+
+	return False
+
+# 0 --> p, q and r are colinear
+# 1 --> Clockwise
+# 2 --> Counterclockwise
+def orientation(p, q, r):
+	val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+	if val == 0:
+		return 0
+
+	return 1 if val > 0 else 2
+
+def intersect(line1, line2):
+	p1 = line1[0]
+	q1 = line1[1]
+	p2 = line2[0]
+	q2 = line2[1]
+
+	s = set()
+	s.add("{x}".format(x=p1))
+	s.add("{x}".format(x=q1))
+	s.add("{x}".format(x=p2))
+	s.add("{x}".format(x=q2))
+
+	if len(s) < 4:
+		return False
+
+	o1 = orientation(p1, q1, p2)
+	o2 = orientation(p1, q1, q2)
+	o3 = orientation(p2, q2, p1)
+	o4 = orientation(p2, q2, q1)
+
+	if o1 != o2 and o3 != o4:
+		return True
+
+    # p1, q1 and p2 are colinear and p2 lies on segment p1q1
+	if o1 == 0 and on_segment(p1, p2, q1): 
+		return True
+ 
+    # p1, q1 and p2 are colinear and q2 lies on segment p1q1
+	if o2 == 0 and on_segment(p1, q2, q1): 
+		return True
+ 
+    # p2, q2 and p1 are colinear and p1 lies on segment p2q2
+	if o3 == 0 and on_segment(p2, p1, q2): 
+		return True
+ 
+    # p2, q2 and q1 are colinear and q1 lies on segment p2q2
+	if o4 == 0 and on_segment(p2, q1, q2): 
+		return True
+
+	return False
+
+def visibility_graph(obs_edges, vertex_edges):
+	valid_edges = []
+
+	# for each of the vertex edges, goes through all of the 
+	# obstacle edges and sees if they intersect 
+	for v_edge in vertex_edges:
+		state = False
+		for o_edge in obs_edges:
+			if intersect(v_edge, o_edge):
+				state = True
+
+		if state == False:
+			valid_edges.append(v_edge)
+
+	print len(vertex_edges)
+	print len(valid_edges)
+
+	return valid_edges
+
+def draw_graph(obstacles, grownobstacles, edges, sp, bb):
+	fig, ax = plt.subplots()
+
+	#DRAW GROWN OBSTACLES
+	for vertices in grownobstacles:
+		codes = [Path.MOVETO]
+		for vertex in range(0, len(vertices) - 2):
+			codes.append(Path.LINETO)
+		codes.append(Path.CLOSEPOLY)
+
+		newvertices = []
+		for vertex in vertices:
+			newvertices.append((vertex[0], vertex[1]))
+		
+		path = Path(newvertices, codes)
+
+		ax = fig.add_subplot(111)
+		patch = patches.PathPatch(path, facecolor='#BEDB39', lw=0, alpha=0.3)
+		ax.add_patch(patch)
+
+	#DRAW SMALL OBSTACLES
+	for vertices in obstacles:
+		codes = [Path.MOVETO]
+		for vertex in range(0, len(vertices) - 2):
+			codes.append(Path.LINETO)
+		codes.append(Path.CLOSEPOLY)
+
+		newvertices = []
+		for vertex in vertices:
+			newvertices.append((vertex[0], vertex[1]))
+		
+		path = Path(newvertices, codes)
+
+		ax = fig.add_subplot(111)
+		patch = patches.PathPatch(path, facecolor='#BEDB39', lw=0)
+		ax.add_patch(patch)
+
+	# DRAW ALL POSSIBLE LINES IN VISIBILITY GRAPH
+	lines = []
+	for edge in edges:
+		lines.append([(edge[0][0], edge[0][1]),(edge[1][0], edge[1][1])])
+
+	c = np.array(['#077EA8'])
+
+	lc = mc.LineCollection(lines, colors=c, linewidths=2)
+	ax.add_collection(lc)
+
+	# DRAW SHORTEST PATH
+	to_highlight = []
+	for i in range(0, len(sp) - 1):
+		to_highlight.append([sp[i], sp[i+1]])
+
+	c = np.array(['#FD7400'])
+	lc = mc.LineCollection(to_highlight, colors=c, linewidths=3)
+	ax.add_collection(lc)
+
+	# DRAW BOUNDING BOX
+	bounding = []
+	for i in range(0, len(bb) - 1):
+		bounding.append([bb[i], bb[i+1]])
+
+	c = np.array(['#BEDB39'])
+	lc = mc.LineCollection(bounding, colors=c, linewidths=2)
+	ax.add_collection(lc)
+
+	ax.autoscale()
+	ax.margins(0.1)
+
+	plt.show()
+
+def get_dist(p, q):
+	return math.sqrt(math.pow(p[0] - q[0], 2) + math.pow(p[1] - q[1], 2))
+
+def dijkstras(m, start, goal):
+	Q = Queue.PriorityQueue()
+	dist = {}
+	previous = {}
+	for vertex in m:
+		dist[vertex] = float("inf")
+		previous[vertex] = None
+		Q.put((dist[vertex], vertex))
+
+	dist[start] = 0
+	Q.put((dist[start], start))
+
+	# while not Q.empty():
+	# 	print Q.get()
+
+	while not Q.empty():
+		u = Q.get()
+		for v in m[u[1]]:
+			alt = dist[u[1]] + get_dist(u[1], v)
+			if alt < dist[v]:
+				dist[v] = alt
+				previous[v] = u[1]
+
+	path = []
+	path.append(goal)
+	cur_node = previous[goal]
+	while cur_node != None:
+		path.append(cur_node)
+		cur_node = previous[cur_node]
+
+	# print path
+	return path
+
+def create_map(edges):
+	m = {}
+	for edge in edges:
+		# print edge
+		node0 = (edge[0][0], edge[0][1])
+		node1 = (edge[1][0], edge[1][1])
+
+		if node0 in m:
+			m[node0].append(node1)
+		else:
+			m[node0] = [node1]
+
+		if node1 in m:
+			m[node1].append(node0)
+		else:
+			m[node1] = [node0]
+
+	# for key in m:
+	# 	print key, m[key]
+
+	return m
+
 if __name__ == "__main__":
-	##length = 0
-	new_obs = False
-	obstacles = 0
 	try:
+		with open('goals.txt', 'r') as file:
+			startline = file.readline().strip().split(' ')
+			start = [float(startline[0]), float(startline[1])]
+
+			endline = file.readline().strip().split(' ')
+			end = [float(endline[0]), float(endline[1])]
+
+		
 		with open('obstacles.txt', 'r') as file:
 			obstacles = int(file.readline().strip())
 
@@ -62,16 +305,43 @@ if __name__ == "__main__":
 					obstacle.append(coordinate)
 				obj.append(obstacle)
 
-			convexhull = grahams(obj[2])
-			grownhull = growobstacle(convexhull)
-			newconvexhull = grahams(grownhull)
+			o = []
+			grownobstacles = []
+			for i in range(1,len(obj)):
+				convexhull = grahams(obj[i])
+				o.append(convexhull)
+				grownhull = grow_obstacle(convexhull)
+				grownobstacles.append(grahams(grownhull))
 
-			print convexhull
-			print newconvexhull
+			grown_obstacle_edges = create_obstacle_edges(grownobstacles)
+			grown_vertices = get_vertices(grownobstacles)
+			grown_vertices.append(end)
+			grown_vertices.append(start)
+			grown_vertex_edges = create_vertex_edges(grown_vertices)
+			grown_valid_edges = visibility_graph(grown_obstacle_edges, grown_vertex_edges)
 
-			# for i in range(1,len(obj)):
-			# 	convexhull = grahams(obj[i])
-			#	growobtacle(convexhull)
+
+			obstacle_edges = create_obstacle_edges(o)
+
+			bounding_box = obj[0]
+			bounding_box.append(bounding_box[0])
+			for i in range(0, len(bounding_box) - 1):
+				obstacle_edges.append([bounding_box[i], bounding_box[i+1]])
+
+			valid_edges = visibility_graph(obstacle_edges, grown_valid_edges)
+
+			# bounding_obstacle_edges = create_obstacle_edges(obj[0])
+			# valid_edges = visibility_graph(bounding_obstacle_edges, valid_edges)
+
+			m = create_map(valid_edges)
+			shortest_path = dijkstras(m, (start[0], start[1]), (end[0], end[1]))
+
+			draw_graph(o, grownobstacles, valid_edges, shortest_path, bounding_box)
+
+			shortest_path = reversed(shortest_path)
+			with open("path.txt", "wb") as output:
+				for point in shortest_path:
+					output.write(str(point).strip(")").strip("(").replace(",", "") + "\n")
 
 	except IOError:
 		sys.stderr.write("ERROR: Cannot read inputfile.\n")
