@@ -64,33 +64,37 @@ def create_obstacle_edges(obstacles):
 	for obstacle in obstacles:
 		for i in range(0, len(obstacle) - 1):
 			edges.append([obstacle[i], obstacle[i+1]])
-
 	return edges
 
+# Takes in a list of obstacles
+# Returns a list of vertices of all obstacles
 def get_vertices(obstacles):
 	vertices = []
 	for obstacle in obstacles:
 		for i in range(0, len(obstacle) - 1):
 			vertices.append(obstacle[i])
-	
 	return vertices
 
+# Takes in a list of vertices
+# Returns a list of edges from each vertice to each other
 def create_vertex_edges(vertices):
 	edges = []
 	for i in vertices:
 		for j in vertices:
 			if j > i:
 				edges.append([j, i])
-
 	return edges
 
+# Takes in three coordinates
+# Returns true of the coorindate is on the
+# line segment created by the two coordinates,
+# otherwise false
 def on_segment(p, q, r):
 	if (q[0] <= max(p[0], r[0]) 
 		and q[0] >= min(p[0], r[0]) 
 		and q[1] <= max(p[1], r[1])
 		and q[1] >= min(p[1], r[1])):
 		return True
-
 	return False
 
 # 0 --> p, q and r are colinear
