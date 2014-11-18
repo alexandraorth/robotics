@@ -7,6 +7,9 @@ import Queue
 import math 
 import sys
 
+# Runs Graham's algorithm on a set of coordinates that makes up an obstacle
+# Takes in a list of coordinates that an obstacle is comprised of
+# Returns a list of coordinates corresponding to the convex hull of an obstacle
 def grahams(obstacle):
 	obstacle = sorted(obstacle, key=lambda x: (x[1], -x[0]))
 	p0 = obstacle[0]
@@ -32,15 +35,20 @@ def grahams(obstacle):
 			i = i + 1
 
 	return stack
-
+	
+# Strictly-less-than function takes in 3 coordinates
+# Returns true if the 3 points form a "left-turn" angle, false otherwise
 def sttl(p1, p2, p3):
 	difference = (p2[0] - p1[0])*(p3[1] - p1[1]) - (p2[1] - p1[1])*(p3[0]-p1[0]);
 	return difference > 0 
 
+# Grows an obstacle's coordinates by an amount defined within the function
+# Returns a list of grown coordinates of the original list of coordinates
 def grow_obstacle(coordinates):
 	rd = 0.5 #robotdiameter
 	newcoordinates = []
 
+	# Grows by adding four new coordinates for each coordinate from argument
 	for c in coordinates:
 		newcoordinates.append([c[0] + rd, c[1] + rd])
 		newcoordinates.append([c[0] + rd, c[1] - rd])
@@ -49,6 +57,8 @@ def grow_obstacle(coordinates):
 
 	return newcoordinates
 
+# Takes in a list of obstacles and creates edges for each obstacle
+# Returns a list of edges of one point to another in an obstacle
 def create_obstacle_edges(obstacles):
 	edges = []
 	for obstacle in obstacles:
@@ -86,6 +96,8 @@ def on_segment(p, q, r):
 # 0 --> p, q and r are colinear
 # 1 --> Clockwise
 # 2 --> Counterclockwise
+# Takes in three coordinates
+# Returns either 0, 1 or 2 indicating orientation of the three coordinates
 def orientation(p, q, r):
 	val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
 	if val == 0:
@@ -93,6 +105,9 @@ def orientation(p, q, r):
 
 	return 1 if val > 0 else 2
 
+# Takes in two line, where each line consists of two coordinates
+# If the endpoints of the two lines are the same, it is not intersecting
+# Returns true if the two lines intersect, false otherwise
 def intersect(line1, line2):
 	p1 = line1[0]
 	q1 = line1[1]
@@ -134,6 +149,9 @@ def intersect(line1, line2):
 
 	return False
 
+# Creates visibility graph
+# Returns a list of valid edges such that the valid edges are
+# vertex edges which do not intersect with any obstacle edge
 def visibility_graph(obs_edges, vertex_edges):
 	valid_edges = []
 
@@ -152,7 +170,9 @@ def visibility_graph(obs_edges, vertex_edges):
 	print len(valid_edges)
 
 	return valid_edges
-
+	
+# Draws a graph with obstacles, grown obstacles, valid edges to
+# traverse, bounding box and shortest path from start to goal
 def draw_graph(obstacles, grownobstacles, edges, sp, bb):
 	fig, ax = plt.subplots()
 
@@ -223,9 +243,12 @@ def draw_graph(obstacles, grownobstacles, edges, sp, bb):
 
 	plt.show()
 
+# Returns the distance between points p and q
 def get_dist(p, q):
 	return math.sqrt(math.pow(p[0] - q[0], 2) + math.pow(p[1] - q[1], 2))
 
+# Runs dijkstras algorithm for shortest path
+# Returns a list of points that consists of the shortest path
 def dijkstras(m, start, goal):
 	Q = Queue.PriorityQueue()
 	dist = {}
@@ -237,9 +260,6 @@ def dijkstras(m, start, goal):
 
 	dist[start] = 0
 	Q.put((dist[start], start))
-
-	# while not Q.empty():
-	# 	print Q.get()
 
 	while not Q.empty():
 		u = Q.get()
@@ -256,9 +276,11 @@ def dijkstras(m, start, goal):
 		path.append(cur_node)
 		cur_node = previous[cur_node]
 
-	# print path
 	return path
 
+# Takes in a list of edges, where each edge consists of two coordinates
+# Returns a dictionary, where the keys are a node
+# and the key values are other nodes reachable by the node
 def create_map(edges):
 	m = {}
 	for edge in edges:
@@ -275,9 +297,6 @@ def create_map(edges):
 			m[node1].append(node0)
 		else:
 			m[node1] = [node0]
-
-	# for key in m:
-	# 	print key, m[key]
 
 	return m
 
@@ -305,6 +324,8 @@ if __name__ == "__main__":
 					obstacle.append(coordinate)
 				obj.append(obstacle)
 
+			# Store convex hull of grown obstacles in grownobstacles
+			# and store convex hull of the original obstacles in o
 			o = []
 			grownobstacles = []
 			for i in range(1,len(obj)):
@@ -313,6 +334,8 @@ if __name__ == "__main__":
 				grownhull = grow_obstacle(convexhull)
 				grownobstacles.append(grahams(grownhull))
 
+			# Creates visibility graph using grown obstacle edges and grown vertices edges
+			# Vertices edges includes the start and goal coordinates
 			grown_obstacle_edges = create_obstacle_edges(grownobstacles)
 			grown_vertices = get_vertices(grownobstacles)
 			grown_vertices.append(end)
@@ -323,21 +346,19 @@ if __name__ == "__main__":
 
 			obstacle_edges = create_obstacle_edges(o)
 
+			# Create a new visibility graph taking into account the bounding box
 			bounding_box = obj[0]
 			bounding_box.append(bounding_box[0])
 			for i in range(0, len(bounding_box) - 1):
 				obstacle_edges.append([bounding_box[i], bounding_box[i+1]])
-
 			valid_edges = visibility_graph(obstacle_edges, grown_valid_edges)
 
-			# bounding_obstacle_edges = create_obstacle_edges(obj[0])
-			# valid_edges = visibility_graph(bounding_obstacle_edges, valid_edges)
-
+			# Creates map of nodes and edges and run dijkstras to obtain the shortest path
 			m = create_map(valid_edges)
 			shortest_path = dijkstras(m, (start[0], start[1]), (end[0], end[1]))
 
+			# Display the graph and write the shortest path coordinates to a file
 			draw_graph(o, grownobstacles, valid_edges, shortest_path, bounding_box)
-
 			shortest_path = reversed(shortest_path)
 			with open("path.txt", "wb") as output:
 				for point in shortest_path:
